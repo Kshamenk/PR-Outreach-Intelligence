@@ -19,7 +19,7 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - .env
+      - .env.${NODE_ENV:-.env}
     depends_on:
       - db
     environment:

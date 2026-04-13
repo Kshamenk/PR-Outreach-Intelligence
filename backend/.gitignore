@@ -1,4 +1,7 @@
 node_modules/
 dist/
 .env
+.env.development
+.env.test
+.env.staging
 *.log

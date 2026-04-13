@@ -1,11 +1,20 @@
 import dotenv from "dotenv";
+import path from "path";
 import { z } from "zod";
 
-dotenv.config();
+// Resolve which .env file to load based on NODE_ENV.
+// Fallback order: .env.<NODE_ENV>  →  .env (production / default)
+const stage = process.env.NODE_ENV || "production";
+const envFile =
+  stage === "production" ? ".env" : `.env.${stage}`;
+
+dotenv.config({ path: path.resolve(process.cwd(), envFile) });
 
 const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
-  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  NODE_ENV: z
+    .enum(["development", "test", "staging", "production"])
+    .default("production"),
 
   DB_HOST: z.string().min(1),
   DB_PORT: z.coerce.number().default(5432),
