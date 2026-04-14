@@ -1,5 +1,6 @@
-import { NotFoundError } from "../../shared/errors/AppError";
+import { NotFoundError, BadRequestError } from "../../shared/errors/AppError";
 import * as campaignsRepo from "./campaigns.repository";
+import * as contactsRepo from "../contacts/contacts.repository";
 import type {
   CreateCampaignDTO,
   UpdateCampaignDTO,
@@ -71,6 +72,11 @@ export async function addContacts(
   const campaign = await campaignsRepo.findById(userId, campaignId);
   if (!campaign) throw new NotFoundError("Campaign not found");
 
+  const ownedContacts = await contactsRepo.findByIds(userId, dto.contactIds);
+  if (ownedContacts.length !== dto.contactIds.length) {
+    throw new BadRequestError("One or more contacts do not exist or do not belong to you");
+  }
+
   const added = await campaignsRepo.addContacts(campaignId, dto.contactIds);
   return { added };
 }
@@ -82,6 +88,9 @@ export async function removeContact(
 ): Promise<void> {
   const campaign = await campaignsRepo.findById(userId, campaignId);
   if (!campaign) throw new NotFoundError("Campaign not found");
+
+  const contact = await contactsRepo.findById(userId, contactId);
+  if (!contact) throw new NotFoundError("Contact not found");
 
   const removed = await campaignsRepo.removeContact(campaignId, contactId);
   if (!removed) throw new NotFoundError("Contact not in campaign");

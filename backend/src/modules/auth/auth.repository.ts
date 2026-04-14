@@ -44,6 +44,37 @@ export async function createUser(email: string, passwordHash: string): Promise<U
   return rows[0];
 }
 
+export async function createUserWithSession(
+  email: string,
+  passwordHash: string,
+  refreshTokenHash: string,
+  expiresAt: Date,
+  userAgent: string | null,
+  ipAddress: string | null
+): Promise<{ user: UserRow; session: SessionRow }> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const { rows: userRows } = await client.query<UserRow>(
+      "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING *",
+      [email, passwordHash]
+    );
+    const user = userRows[0];
+    const { rows: sessionRows } = await client.query<SessionRow>(
+      `INSERT INTO auth_sessions (user_id, refresh_token_hash, expires_at, user_agent, ip_address)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [user.id, refreshTokenHash, expiresAt, userAgent, ipAddress]
+    );
+    await client.query("COMMIT");
+    return { user, session: sessionRows[0] };
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 export async function createSession(
   userId: number,
   refreshTokenHash: string,

@@ -21,10 +21,6 @@ export async function login(req: Request, res: Response): Promise<void> {
 
 export async function refresh(req: Request, res: Response): Promise<void> {
     const { refreshToken } = req.body;
-    if (!refreshToken) {
-        res.status(400).json({ error: "refreshToken is required" });
-        return;
-    }
     const result = await authService.refresh(
         refreshToken,
         req.headers["user-agent"] ?? null,
