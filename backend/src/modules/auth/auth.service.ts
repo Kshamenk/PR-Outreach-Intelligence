@@ -6,7 +6,7 @@ import { ConflictError, UnauthorizedError } from "../../shared/errors/AppError";
 import {
   findUserByEmail,
   findUserById,
-  createUser,
+  createUserWithSession,
   createSession,
   findSessionByTokenHash,
   revokeSession,
@@ -44,14 +44,20 @@ export async function register(
   if (existing) throw new ConflictError("Email already registered");
 
   const passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
-  const user = await createUser(dto.email, passwordHash);
-
-  const accessToken = signAccessToken(user.id, user.email);
   const refreshToken = crypto.randomBytes(40).toString("hex");
   const refreshTokenHash = hashToken(refreshToken);
   const expiresAt = parseExpiry(env.JWT_REFRESH_EXPIRES_IN);
 
-  await createSession(user.id, refreshTokenHash, expiresAt, userAgent, ipAddress);
+  const { user } = await createUserWithSession(
+    dto.email,
+    passwordHash,
+    refreshTokenHash,
+    expiresAt,
+    userAgent,
+    ipAddress
+  );
+
+  const accessToken = signAccessToken(user.id, user.email);
 
   return {
     user: { id: user.id, email: user.email },
