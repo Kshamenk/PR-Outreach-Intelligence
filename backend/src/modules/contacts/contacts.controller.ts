@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import * as contactsService from "./contacts.service";
-import { parseId } from "../../shared/utils";
+import { parseId, parsePagination } from "../../shared/utils";
 
 export async function create(req: Request, res: Response): Promise<void> {
   const result = await contactsService.createContact(req.user!.userId, req.body);
@@ -8,7 +8,8 @@ export async function create(req: Request, res: Response): Promise<void> {
 }
 
 export async function list(req: Request, res: Response): Promise<void> {
-  const result = await contactsService.listContacts(req.user!.userId);
+  const { limit, offset } = parsePagination(req.query as Record<string, unknown>);
+  const result = await contactsService.listContacts(req.user!.userId, limit, offset);
   res.json(result);
 }
 

@@ -1,5 +1,7 @@
-import { NotFoundError } from "../../shared/errors/AppError";
+import { NotFoundError, BadRequestError } from "../../shared/errors/AppError";
 import * as contactsRepo from "./contacts.repository";
+import { logEvent } from "../../shared/audit/audit.repository";
+import type { PaginatedResult } from "@pr-outreach/shared-types";
 import type {
   CreateContactDTO,
   UpdateContactDTO,
@@ -38,6 +40,7 @@ export async function createContact(
   dto: CreateContactDTO
 ): Promise<ContactResponseDTO> {
   const row = await contactsRepo.create(userId, dto.name, dto.email, dto.outlet, dto.topics);
+  await logEvent(userId, "contact", row.id, "created");
   return toResponseDTO(row);
 }
 
@@ -47,9 +50,13 @@ export async function getContact(userId: number, contactId: number): Promise<Con
   return toResponseDTO(row);
 }
 
-export async function listContacts(userId: number): Promise<ContactListItemDTO[]> {
-  const rows = await contactsRepo.findAllByUser(userId);
-  return rows.map(toListItemDTO);
+export async function listContacts(
+  userId: number,
+  limit: number,
+  offset: number
+): Promise<PaginatedResult<ContactListItemDTO>> {
+  const { rows, total } = await contactsRepo.findAllByUser(userId, limit, offset);
+  return { data: rows.map(toListItemDTO), total, limit, offset };
 }
 
 export async function updateContact(
@@ -57,6 +64,12 @@ export async function updateContact(
   contactId: number,
   dto: UpdateContactDTO
 ): Promise<ContactResponseDTO> {
+  const existing = await contactsRepo.findById(userId, contactId);
+  if (!existing) throw new NotFoundError("Contact not found");
+  if (existing.archived_at && dto.archivedAt !== null) {
+    throw new BadRequestError("Cannot update an archived contact. Restore it first.");
+  }
+
   const fields: Record<string, unknown> = {};
   if (dto.name !== undefined) fields.name = dto.name;
   if (dto.email !== undefined) fields.email = dto.email;
@@ -66,10 +79,12 @@ export async function updateContact(
 
   const row = await contactsRepo.update(userId, contactId, fields);
   if (!row) throw new NotFoundError("Contact not found");
+  await logEvent(userId, "contact", contactId, "updated");
   return toResponseDTO(row);
 }
 
 export async function deleteContact(userId: number, contactId: number): Promise<void> {
   const row = await contactsRepo.softDelete(userId, contactId);
   if (!row) throw new NotFoundError("Contact not found");
+  await logEvent(userId, "contact", contactId, "archived");
 }

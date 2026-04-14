@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import * as campaignsService from "./campaigns.service";
-import { parseId } from "../../shared/utils";
+import { parseId, parsePagination } from "../../shared/utils";
 
 export async function create(req: Request, res: Response): Promise<void> {
   const result = await campaignsService.createCampaign(req.user!.userId, req.body);
@@ -8,7 +8,8 @@ export async function create(req: Request, res: Response): Promise<void> {
 }
 
 export async function list(req: Request, res: Response): Promise<void> {
-  const result = await campaignsService.listCampaigns(req.user!.userId);
+  const { limit, offset } = parsePagination(req.query as Record<string, unknown>);
+  const result = await campaignsService.listCampaigns(req.user!.userId, limit, offset);
   res.json(result);
 }
 
@@ -41,4 +42,10 @@ export async function getParticipants(req: Request, res: Response): Promise<void
   const campaignId = parseId(req.params.id);
   const result = await campaignsService.getParticipants(req.user!.userId, campaignId);
   res.json(result);
+}
+
+export async function remove(req: Request, res: Response): Promise<void> {
+  const campaignId = parseId(req.params.id);
+  await campaignsService.deleteCampaign(req.user!.userId, campaignId);
+  res.status(204).send();
 }
