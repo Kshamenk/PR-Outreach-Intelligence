@@ -39,7 +39,8 @@ CREATE TABLE IF NOT EXISTS contacts (
   last_contacted_at  TIMESTAMPTZ,
   archived_at        TIMESTAMPTZ,
   created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id, email)
 );
 
 CREATE INDEX IF NOT EXISTS idx_contacts_user_id ON contacts(user_id);
@@ -51,7 +52,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
   name        VARCHAR(255) NOT NULL,
   description TEXT NOT NULL DEFAULT '',
   objective   TEXT NOT NULL DEFAULT '',
-  status      VARCHAR(50) NOT NULL DEFAULT 'draft',
+  status      VARCHAR(50) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'active', 'paused', 'completed')),
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -63,7 +64,7 @@ CREATE TABLE IF NOT EXISTS campaign_contacts (
   id               SERIAL PRIMARY KEY,
   campaign_id      INT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
   contact_id       INT NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
-  status           VARCHAR(50) NOT NULL DEFAULT 'pending',
+  status           VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'contacted', 'replied', 'opted_out')),
   assigned_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   last_outreach_at TIMESTAMPTZ,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),

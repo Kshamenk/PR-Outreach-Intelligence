@@ -97,6 +97,16 @@ export async function update(
   return rows[0] ?? null;
 }
 
+export async function findByIds(userId: number, contactIds: number[]): Promise<ContactRow[]> {
+  if (contactIds.length === 0) return [];
+  const placeholders = contactIds.map((_, i) => `$${i + 2}`).join(", ");
+  const { rows } = await pool.query<ContactRow>(
+    `SELECT * FROM contacts WHERE id IN (${placeholders}) AND user_id = $1`,
+    [userId, ...contactIds]
+  );
+  return rows;
+}
+
 export async function softDelete(userId: number, contactId: number): Promise<ContactRow | null> {
   const { rows } = await pool.query<ContactRow>(
     `UPDATE contacts SET archived_at = NOW(), updated_at = NOW()

@@ -8,3 +8,8 @@ export const pool = new Pool({
   password: env.DB_PASSWORD,
   database: env.DB_NAME,
 });
+
+pool.on("error", (err) => {
+  console.error("Unexpected idle client error:", err);
+  process.exit(1);
+});
