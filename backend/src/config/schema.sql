@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
   description TEXT NOT NULL DEFAULT '',
   objective   TEXT NOT NULL DEFAULT '',
   status      VARCHAR(50) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'active', 'paused', 'completed')),
+  archived_at TIMESTAMPTZ,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
