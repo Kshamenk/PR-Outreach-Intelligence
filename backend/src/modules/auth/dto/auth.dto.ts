@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+export type {
+  AuthResponseDTO,
+  MeResponseDTO,
+  RegisterDTO,
+  LoginDTO,
+  RefreshDTO,
+  LogoutDTO,
+} from "@pr-outreach/shared-types";
+
 export const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(128),
@@ -17,20 +26,3 @@ export const refreshSchema = z.object({
 export const logoutSchema = z.object({
   refreshToken: z.string().min(1).optional(),
 });
-
-export type RegisterDTO = z.infer<typeof registerSchema>;
-export type LoginDTO = z.infer<typeof loginSchema>;
-export type RefreshDTO = z.infer<typeof refreshSchema>;
-export type LogoutDTO = z.infer<typeof logoutSchema>;
-
-export interface AuthResponseDTO {
-  user: { id: number; email: string };
-  accessToken: string;
-  refreshToken: string;
-}
-
-export interface MeResponseDTO {
-  id: number;
-  email: string;
-  createdAt: string;
-}

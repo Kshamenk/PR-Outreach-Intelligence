@@ -1,6 +1,8 @@
 import { NotFoundError, BadRequestError } from "../../shared/errors/AppError";
 import * as campaignsRepo from "./campaigns.repository";
 import * as contactsRepo from "../contacts/contacts.repository";
+import { logEvent } from "../../shared/audit/audit.repository";
+import type { PaginatedResult } from "@pr-outreach/shared-types";
 import type {
   CreateCampaignDTO,
   UpdateCampaignDTO,
@@ -37,6 +39,7 @@ export async function createCampaign(
   dto: CreateCampaignDTO
 ): Promise<CampaignResponseDTO> {
   const row = await campaignsRepo.create(userId, dto.name, dto.description, dto.objective);
+  await logEvent(userId, "campaign", row.id, "created");
   return toResponseDTO(row);
 }
 
@@ -49,9 +52,13 @@ export async function getCampaign(
   return toResponseDTO(row);
 }
 
-export async function listCampaigns(userId: number): Promise<CampaignResponseDTO[]> {
-  const rows = await campaignsRepo.findAllByUser(userId);
-  return rows.map(toResponseDTO);
+export async function listCampaigns(
+  userId: number,
+  limit: number,
+  offset: number
+): Promise<PaginatedResult<CampaignResponseDTO>> {
+  const { rows, total } = await campaignsRepo.findAllByUser(userId, limit, offset);
+  return { data: rows.map(toResponseDTO), total, limit, offset };
 }
 
 export async function updateCampaign(
@@ -61,6 +68,7 @@ export async function updateCampaign(
 ): Promise<CampaignResponseDTO> {
   const row = await campaignsRepo.update(userId, campaignId, dto);
   if (!row) throw new NotFoundError("Campaign not found");
+  await logEvent(userId, "campaign", campaignId, "updated");
   return toResponseDTO(row);
 }
 
@@ -78,6 +86,7 @@ export async function addContacts(
   }
 
   const added = await campaignsRepo.addContacts(campaignId, dto.contactIds);
+  await logEvent(userId, "campaign", campaignId, "updated", { action: "contacts_added", contactIds: dto.contactIds });
   return { added };
 }
 
@@ -94,6 +103,7 @@ export async function removeContact(
 
   const removed = await campaignsRepo.removeContact(campaignId, contactId);
   if (!removed) throw new NotFoundError("Contact not in campaign");
+  await logEvent(userId, "campaign", campaignId, "updated", { action: "contact_removed", contactId });
 }
 
 export async function getParticipants(
@@ -105,4 +115,10 @@ export async function getParticipants(
 
   const rows = await campaignsRepo.getParticipants(campaignId);
   return rows.map(toParticipantDTO);
+}
+
+export async function deleteCampaign(userId: number, campaignId: number): Promise<void> {
+  const row = await campaignsRepo.softDelete(userId, campaignId);
+  if (!row) throw new NotFoundError("Campaign not found");
+  await logEvent(userId, "campaign", campaignId, "archived");
 }

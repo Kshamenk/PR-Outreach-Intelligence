@@ -62,7 +62,13 @@ export async function findByContact(
   contactId: number,
   limit: number,
   offset: number
-): Promise<InteractionRow[]> {
+): Promise<{ rows: InteractionRow[]; total: number }> {
+  const countResult = await pool.query<{ count: string }>(
+    "SELECT COUNT(*) FROM interactions WHERE user_id = $1 AND contact_id = $2",
+    [userId, contactId]
+  );
+  const total = parseInt(countResult.rows[0].count, 10);
+
   const { rows } = await pool.query<InteractionRow>(
     `SELECT * FROM interactions
      WHERE user_id = $1 AND contact_id = $2
@@ -70,7 +76,7 @@ export async function findByContact(
      LIMIT $3 OFFSET $4`,
     [userId, contactId, limit, offset]
   );
-  return rows;
+  return { rows, total };
 }
 
 export async function findByCampaign(
@@ -78,7 +84,13 @@ export async function findByCampaign(
   campaignId: number,
   limit: number,
   offset: number
-): Promise<InteractionRow[]> {
+): Promise<{ rows: InteractionRow[]; total: number }> {
+  const countResult = await pool.query<{ count: string }>(
+    "SELECT COUNT(*) FROM interactions WHERE user_id = $1 AND campaign_id = $2",
+    [userId, campaignId]
+  );
+  const total = parseInt(countResult.rows[0].count, 10);
+
   const { rows } = await pool.query<InteractionRow>(
     `SELECT * FROM interactions
      WHERE user_id = $1 AND campaign_id = $2
@@ -86,14 +98,20 @@ export async function findByCampaign(
      LIMIT $3 OFFSET $4`,
     [userId, campaignId, limit, offset]
   );
-  return rows;
+  return { rows, total };
 }
 
 export async function findAllByUser(
   userId: number,
   limit: number,
   offset: number
-): Promise<InteractionRow[]> {
+): Promise<{ rows: InteractionRow[]; total: number }> {
+  const countResult = await pool.query<{ count: string }>(
+    "SELECT COUNT(*) FROM interactions WHERE user_id = $1",
+    [userId]
+  );
+  const total = parseInt(countResult.rows[0].count, 10);
+
   const { rows } = await pool.query<InteractionRow>(
     `SELECT * FROM interactions
      WHERE user_id = $1
@@ -101,7 +119,7 @@ export async function findAllByUser(
      LIMIT $2 OFFSET $3`,
     [userId, limit, offset]
   );
-  return rows;
+  return { rows, total };
 }
 
 export async function updateContactLastContacted(

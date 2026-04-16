@@ -12,6 +12,7 @@ router.post("/", validate(createCampaignSchema), campaignsController.create);
 router.get("/", campaignsController.list);
 router.get("/:id", campaignsController.getById);
 router.put("/:id", validate(updateCampaignSchema), campaignsController.update);
+router.delete("/:id", campaignsController.remove);
 
 router.post("/:id/contacts", validate(addContactsSchema), campaignsController.addContacts);
 router.delete("/:id/contacts/:contactId", campaignsController.removeContact);

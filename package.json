@@ -1,0 +1,13 @@
+{
+  "name": "pr-outreach-intelligence",
+  "private": true,
+  "scripts": {
+    "dev:backend": "pnpm --filter @pr-outreach/backend dev",
+    "dev:frontend": "pnpm --filter @pr-outreach/frontend dev",
+    "dev": "pnpm run --parallel dev:backend dev:frontend",
+    "build": "pnpm --filter @pr-outreach/shared-types build && pnpm run --parallel build:backend build:frontend",
+    "build:backend": "pnpm --filter @pr-outreach/backend build",
+    "build:frontend": "pnpm --filter @pr-outreach/frontend build",
+    "migrate": "pnpm --filter @pr-outreach/backend migrate"
+  }
+}

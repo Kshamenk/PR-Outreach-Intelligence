@@ -1,4 +1,5 @@
 import { pool } from "../../config/db";
+import type { PoolClient } from "pg";
 
 export interface ContactRow {
   id: number;
@@ -46,7 +47,17 @@ export async function findById(userId: number, contactId: number): Promise<Conta
   return rows[0] ?? null;
 }
 
-export async function findAllByUser(userId: number): Promise<ContactListRow[]> {
+export async function findAllByUser(
+  userId: number,
+  limit: number,
+  offset: number
+): Promise<{ rows: ContactListRow[]; total: number }> {
+  const countResult = await pool.query<{ count: string }>(
+    "SELECT COUNT(*) FROM contacts WHERE user_id = $1 AND archived_at IS NULL",
+    [userId]
+  );
+  const total = parseInt(countResult.rows[0].count, 10);
+
   const { rows } = await pool.query<ContactListRow>(
     `SELECT
        c.id,
@@ -59,10 +70,11 @@ export async function findAllByUser(userId: number): Promise<ContactListRow[]> {
      LEFT JOIN campaign_contacts cc ON cc.contact_id = c.id
      WHERE c.user_id = $1 AND c.archived_at IS NULL
      GROUP BY c.id
-     ORDER BY c.created_at DESC`,
-    [userId]
+     ORDER BY c.created_at DESC
+     LIMIT $2 OFFSET $3`,
+    [userId, limit, offset]
   );
-  return rows;
+  return { rows, total };
 }
 
 const ALLOWED_UPDATE_COLUMNS = ["name", "email", "outlet", "topics", "archived_at"] as const;
@@ -115,4 +127,33 @@ export async function softDelete(userId: number, contactId: number): Promise<Con
     [contactId, userId]
   );
   return rows[0] ?? null;
+}
+
+/**
+ * Recalculates relationship_score for a contact based on interactions.
+ * Scoring: +1 per outbound, +3 per replied, -1 per 30 days of inactivity.
+ * Score is clamped to [0, 100].
+ */
+export async function recalculateScore(
+  contactId: number,
+  client?: PoolClient
+): Promise<number> {
+  const q = client ?? pool;
+  const { rows } = await q.query<{ score: string }>(
+    `SELECT GREATEST(0, LEAST(100,
+       COALESCE(SUM(CASE WHEN direction = 'outbound' THEN 1 ELSE 0 END), 0)
+       + COALESCE(SUM(CASE WHEN status = 'replied' THEN 3 ELSE 0 END), 0)
+       - GREATEST(0, EXTRACT(EPOCH FROM (NOW() - MAX(occurred_at))) / 2592000)::int
+     ))::int AS score
+     FROM interactions
+     WHERE contact_id = $1`,
+    [contactId]
+  );
+  const score = parseInt(rows[0].score, 10);
+
+  await q.query(
+    "UPDATE contacts SET relationship_score = $1, updated_at = NOW() WHERE id = $2",
+    [score, contactId]
+  );
+  return score;
 }
