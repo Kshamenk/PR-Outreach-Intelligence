@@ -13,6 +13,7 @@ import {
   revokeAllUserSessions,
 } from "./auth.repository";
 import type { AuthResponseDTO, MeResponseDTO, RegisterDTO, LoginDTO } from "./dto/auth.dto";
+import { logEvent } from "../../shared/audit/audit.repository";
 
 const SALT_ROUNDS = 10;
 
@@ -59,6 +60,8 @@ export async function register(
 
   const accessToken = signAccessToken(user.id, user.email);
 
+  await logEvent(user.id, "user", user.id, "register");
+
   return {
     user: { id: user.id, email: user.email },
     accessToken,
@@ -83,6 +86,8 @@ export async function login(
   const expiresAt = parseExpiry(env.JWT_REFRESH_EXPIRES_IN);
 
   await createSession(user.id, refreshTokenHash, expiresAt, userAgent, ipAddress);
+
+  await logEvent(user.id, "user", user.id, "login");
 
   return {
     user: { id: user.id, email: user.email },
@@ -133,6 +138,7 @@ export async function logout(refreshToken: string): Promise<void> {
 
 export async function logoutAll(userId: number): Promise<void> {
   await revokeAllUserSessions(userId);
+  await logEvent(userId, "user", userId, "logout");
 }
 
 export async function me(userId: number): Promise<MeResponseDTO> {

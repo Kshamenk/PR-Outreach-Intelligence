@@ -7,6 +7,7 @@ export interface CampaignRow {
   description: string;
   objective: string;
   status: string;
+  archived_at: Date | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -44,12 +45,22 @@ export async function findById(userId: number, campaignId: number): Promise<Camp
   return rows[0] ?? null;
 }
 
-export async function findAllByUser(userId: number): Promise<CampaignRow[]> {
-  const { rows } = await pool.query<CampaignRow>(
-    "SELECT * FROM campaigns WHERE user_id = $1 ORDER BY created_at DESC",
+export async function findAllByUser(
+  userId: number,
+  limit: number,
+  offset: number
+): Promise<{ rows: CampaignRow[]; total: number }> {
+  const countResult = await pool.query<{ count: string }>(
+    "SELECT COUNT(*) FROM campaigns WHERE user_id = $1 AND archived_at IS NULL",
     [userId]
   );
-  return rows;
+  const total = parseInt(countResult.rows[0].count, 10);
+
+  const { rows } = await pool.query<CampaignRow>(
+    "SELECT * FROM campaigns WHERE user_id = $1 AND archived_at IS NULL ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+    [userId, limit, offset]
+  );
+  return { rows, total };
 }
 
 export async function update(
@@ -127,4 +138,14 @@ export async function getParticipants(campaignId: number): Promise<CampaignParti
     [campaignId]
   );
   return rows;
+}
+
+export async function softDelete(userId: number, campaignId: number): Promise<CampaignRow | null> {
+  const { rows } = await pool.query<CampaignRow>(
+    `UPDATE campaigns SET archived_at = NOW(), updated_at = NOW()
+     WHERE id = $1 AND user_id = $2 AND archived_at IS NULL
+     RETURNING *`,
+    [campaignId, userId]
+  );
+  return rows[0] ?? null;
 }
