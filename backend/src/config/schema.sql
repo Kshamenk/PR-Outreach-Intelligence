@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS ai_suggestions (
   id               SERIAL PRIMARY KEY,
   user_id          INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   contact_id       INT NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
-  campaign_id      INT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  campaign_id      INT REFERENCES campaigns(id) ON DELETE SET NULL,
   subject          TEXT NOT NULL,
   body             TEXT NOT NULL,
   status           VARCHAR(50) NOT NULL DEFAULT 'draft',

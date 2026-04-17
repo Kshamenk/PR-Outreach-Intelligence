@@ -66,6 +66,12 @@ export async function updateCampaign(
   campaignId: number,
   dto: UpdateCampaignDTO
 ): Promise<CampaignResponseDTO> {
+  const existing = await campaignsRepo.findById(userId, campaignId);
+  if (!existing) throw new NotFoundError("Campaign not found");
+  if (existing.archived_at) {
+    throw new BadRequestError("Cannot update an archived campaign. Restore it first.");
+  }
+
   const row = await campaignsRepo.update(userId, campaignId, dto);
   if (!row) throw new NotFoundError("Campaign not found");
   await logEvent(userId, "campaign", campaignId, "updated");

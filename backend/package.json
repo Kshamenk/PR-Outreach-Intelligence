@@ -9,7 +9,7 @@
     "start:staging": "cross-env NODE_ENV=staging node dist/server.js",
     "build": "tsc",
     "start": "cross-env NODE_ENV=production node dist/server.js",
-    "migrate": "ts-node-dev src/config/migrate.ts",
+    "migrate": "cross-env NODE_ENV=development ts-node-dev src/config/migrate.ts",
     "migrate:test": "cross-env NODE_ENV=test ts-node-dev src/config/migrate.ts"
   },
   "keywords": [],

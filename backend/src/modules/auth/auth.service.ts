@@ -109,8 +109,6 @@ export async function refresh(
     throw new UnauthorizedError("Refresh token expired");
   }
 
-  await revokeSession(session.id);
-
   const user = await findUserById(session.user_id);
   if (!user) throw new UnauthorizedError("User not found");
 
@@ -119,7 +117,27 @@ export async function refresh(
   const newRefreshTokenHash = hashToken(newRefreshToken);
   const expiresAt = parseExpiry(env.JWT_REFRESH_EXPIRES_IN);
 
-  await createSession(user.id, newRefreshTokenHash, expiresAt, userAgent, ipAddress);
+  // Revoke old + create new session in a single transaction
+  const { pool } = await import("../../config/db");
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      "UPDATE auth_sessions SET revoked_at = NOW() WHERE id = $1",
+      [session.id]
+    );
+    await client.query(
+      `INSERT INTO auth_sessions (user_id, refresh_token_hash, expires_at, user_agent, ip_address)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [user.id, newRefreshTokenHash, expiresAt, userAgent, ipAddress]
+    );
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 
   return {
     user: { id: user.id, email: user.email },

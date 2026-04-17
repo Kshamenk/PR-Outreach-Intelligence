@@ -8,12 +8,14 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: pr_ai_db
+      POSTGRES_DB: pr_ai_db_dev
     ports:
       - "5432:5432"
 
   backend:
-    build: .
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
     container_name: pr_ai_backend
     restart: always
     ports:
