@@ -19,10 +19,3 @@ export function parsePagination(query: Record<string, unknown>): { limit: number
   if (offset < 0) offset = 0;
   return { limit, offset };
 }
-
-export interface PaginatedResult<T> {
-  data: T[];
-  total: number;
-  limit: number;
-  offset: number;
-}

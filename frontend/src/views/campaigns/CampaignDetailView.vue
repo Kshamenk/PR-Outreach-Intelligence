@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCampaignsStore } from '@/stores/campaigns.store'
 import { useContactsStore } from '@/stores/contacts.store'
@@ -23,6 +23,12 @@ const showInteractionForm = ref(false)
 const interactionKey = ref(0)
 const selectedContactIds = ref<number[]>([])
 const addingContacts = ref(false)
+const addContactsDialogRef = ref<HTMLDialogElement | null>(null)
+
+watch(showAddContacts, (isOpen) => {
+  if (isOpen) addContactsDialogRef.value?.showModal()
+  else addContactsDialogRef.value?.close()
+})
 
 async function handleArchive() {
   await campaignsStore.archive(campaignId)
@@ -224,7 +230,6 @@ onUnmounted(() => campaignsStore.clearCurrent())
     <!-- Add Contacts Modal -->
     <dialog
       ref="addContactsDialogRef"
-      :open="showAddContacts || undefined"
       class="rounded-xl bg-white p-0 shadow-xl backdrop:bg-black/40"
       @cancel.prevent="showAddContacts = false"
     >

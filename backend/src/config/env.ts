@@ -3,12 +3,11 @@ import path from "path";
 import { z } from "zod";
 
 // Resolve which .env file to load based on NODE_ENV.
-// Fallback order: .env.<NODE_ENV>  →  .env (production / default)
+// Always use .env.<stage> to avoid conflicts with dotenvx auto-loading .env
 const stage = process.env.NODE_ENV || "production";
-const envFile =
-  stage === "production" ? ".env" : `.env.${stage}`;
+const envFile = `.env.${stage}`;
 
-dotenv.config({ path: path.resolve(process.cwd(), envFile) });
+dotenv.config({ path: path.resolve(process.cwd(), envFile), override: true });
 
 const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
@@ -27,6 +26,10 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
 
   CORS_ORIGIN: z.string().default("http://localhost:5173"),
+
+  // AI provider (optional — required when AI module is enabled)
+  AI_PROVIDER_API_KEY: z.string().optional(),
+  AI_PROVIDER_MODEL: z.string().default("gpt-4o-mini"),
 });
 
 const parsed = envSchema.safeParse(process.env);
