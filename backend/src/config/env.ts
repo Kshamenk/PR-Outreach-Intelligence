@@ -27,9 +27,20 @@ const envSchema = z.object({
 
   CORS_ORIGIN: z.string().default("http://localhost:5173"),
 
-  // AI provider (optional — required when AI module is enabled)
+  // AI provider configuration
+  AI_PROVIDER: z.enum(["openai", "gemini"]).default("openai"),
   AI_PROVIDER_API_KEY: z.string().optional(),
   AI_PROVIDER_MODEL: z.string().default("gpt-4o-mini"),
+
+  // Gemini-specific (used when AI_PROVIDER=gemini)
+  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().default("gemini-2.0-flash"),
+
+  // Email provider configuration
+  EMAIL_PROVIDER: z.enum(["resend", "console"]).default("console"),
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM_ADDRESS: z.string().default("onboarding@resend.dev"),
+  EMAIL_FROM_NAME: z.string().default("PR Outreach"),
 });
 
 const parsed = envSchema.safeParse(process.env);

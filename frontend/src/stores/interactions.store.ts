@@ -6,12 +6,14 @@ import type {
   PaginatedResult,
 } from '@pr-outreach/shared-types'
 import * as interactionsApi from '@/api/interactions.api'
+import { useNotifications } from '@/composables/useNotifications'
 
 export const useInteractionsStore = defineStore('interactions', () => {
   const items = ref<InteractionResponseDTO[]>([])
   const total = ref(0)
   const loading = ref(false)
   const error = ref('')
+  const { notify } = useNotifications()
 
   async function fetchList(
     params: { contactId?: number; campaignId?: number; limit?: number; offset?: number } = {},
@@ -31,6 +33,7 @@ export const useInteractionsStore = defineStore('interactions', () => {
 
   async function create(dto: CreateInteractionDTO): Promise<InteractionResponseDTO> {
     const result = await interactionsApi.createInteraction(dto)
+    notify({ type: 'success', message: 'Interaction logged' })
     return result
   }
 

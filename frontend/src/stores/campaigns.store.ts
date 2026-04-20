@@ -9,6 +9,7 @@ import type {
   PaginatedResult,
 } from '@pr-outreach/shared-types'
 import * as campaignsApi from '@/api/campaigns.api'
+import { useNotifications } from '@/composables/useNotifications'
 
 export const useCampaignsStore = defineStore('campaigns', () => {
   const items = ref<CampaignResponseDTO[]>([])
@@ -17,6 +18,7 @@ export const useCampaignsStore = defineStore('campaigns', () => {
   const participants = ref<CampaignParticipantDTO[]>([])
   const loading = ref(false)
   const error = ref('')
+  const { notify } = useNotifications()
 
   async function fetchList(limit = 50, offset = 0): Promise<void> {
     loading.value = true
@@ -46,6 +48,7 @@ export const useCampaignsStore = defineStore('campaigns', () => {
 
   async function create(dto: CreateCampaignDTO): Promise<CampaignResponseDTO> {
     const result = await campaignsApi.createCampaign(dto)
+    notify({ type: 'success', message: 'Campaign created' })
     await fetchList()
     return result
   }
@@ -53,6 +56,7 @@ export const useCampaignsStore = defineStore('campaigns', () => {
   async function update(id: number, dto: UpdateCampaignDTO): Promise<CampaignResponseDTO> {
     const result = await campaignsApi.updateCampaign(id, dto)
     if (current.value?.id === id) current.value = result
+    notify({ type: 'success', message: 'Campaign updated' })
     await fetchList()
     return result
   }
@@ -60,6 +64,7 @@ export const useCampaignsStore = defineStore('campaigns', () => {
   async function archive(id: number): Promise<void> {
     await campaignsApi.deleteCampaign(id)
     if (current.value?.id === id) current.value = null
+    notify({ type: 'success', message: 'Campaign archived' })
     await fetchList()
   }
 

@@ -2,6 +2,7 @@
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import NotificationContainer from '@/components/ui/NotificationContainer.vue'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -17,4 +18,5 @@ const auth = useAuthStore()
     </AppLayout>
     <RouterView v-else />
   </template>
+  <NotificationContainer />
 </template>
