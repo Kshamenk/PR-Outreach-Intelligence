@@ -132,3 +132,18 @@ export async function updateContactLastContacted(
     [contactId]
   );
 }
+
+export async function updateCampaignContactStatus(
+  campaignId: number,
+  contactId: number,
+  status: string,
+  client?: PoolClient
+): Promise<void> {
+  const q = client ?? pool;
+  await q.query(
+    `UPDATE campaign_contacts
+     SET status = $1, last_outreach_at = NOW()
+     WHERE campaign_id = $2 AND contact_id = $3`,
+    [status, campaignId, contactId]
+  );
+}

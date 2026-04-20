@@ -39,7 +39,7 @@ export async function createCampaign(
   dto: CreateCampaignDTO
 ): Promise<CampaignResponseDTO> {
   const row = await campaignsRepo.create(userId, dto.name, dto.description, dto.objective);
-  await logEvent(userId, "campaign", row.id, "created");
+  await logEvent(userId, "campaign", row.id, "created", { name: row.name });
   return toResponseDTO(row);
 }
 
@@ -74,7 +74,7 @@ export async function updateCampaign(
 
   const row = await campaignsRepo.update(userId, campaignId, dto);
   if (!row) throw new NotFoundError("Campaign not found");
-  await logEvent(userId, "campaign", campaignId, "updated");
+  await logEvent(userId, "campaign", campaignId, "updated", { name: row.name });
   return toResponseDTO(row);
 }
 
@@ -126,5 +126,5 @@ export async function getParticipants(
 export async function deleteCampaign(userId: number, campaignId: number): Promise<void> {
   const row = await campaignsRepo.softDelete(userId, campaignId);
   if (!row) throw new NotFoundError("Campaign not found");
-  await logEvent(userId, "campaign", campaignId, "archived");
+  await logEvent(userId, "campaign", campaignId, "archived", { name: row.name });
 }

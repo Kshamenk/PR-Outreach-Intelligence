@@ -8,9 +8,9 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: pr_ai_db_dev
+      POSTGRES_DB: pr_ai_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
 
   backend:
     build:

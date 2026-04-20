@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCampaignsStore } from '@/stores/campaigns.store'
 import PaginationControls from '@/components/ui/PaginationControls.vue'
@@ -13,7 +13,16 @@ const store = useCampaignsStore()
 
 const limit = 20
 const offset = ref(0)
+const search = ref('')
 const showCreate = ref(false)
+
+const filtered = computed(() => {
+  if (!search.value) return store.items
+  const q = search.value.toLowerCase()
+  return store.items.filter(
+    (c) => c.name.toLowerCase().includes(q) || c.description.toLowerCase().includes(q),
+  )
+})
 
 function goToDetail(id: number) {
   router.push({ name: 'campaign-detail', params: { id } })
@@ -41,6 +50,15 @@ onMounted(() => store.fetchList(limit, 0))
       >
         + New Campaign
       </button>
+    </div>
+
+    <!-- Search -->
+    <div class="mt-4">
+      <input
+        v-model="search"
+        placeholder="Filter by name or description…"
+        class="w-full max-w-sm rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+      />
     </div>
 
     <!-- Loading -->
@@ -74,7 +92,7 @@ onMounted(() => store.fetchList(limit, 0))
         </thead>
         <tbody class="divide-y divide-gray-200">
           <tr
-            v-for="campaign in store.items"
+            v-for="campaign in filtered"
             :key="campaign.id"
             class="cursor-pointer transition-colors hover:bg-gray-50"
             @click="goToDetail(campaign.id)"

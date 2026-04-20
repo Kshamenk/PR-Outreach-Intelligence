@@ -178,7 +178,13 @@ onUnmounted(() => campaignsStore.clearCurrent())
                 <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                   {{ p.lastOutreachAt ? formatDate(p.lastOutreachAt) : '—' }}
                 </td>
-                <td class="whitespace-nowrap px-6 py-4 text-right">
+                <td class="whitespace-nowrap px-6 py-4 text-right space-x-3">
+                  <router-link
+                    :to="{ name: 'outreach', query: { contactId: p.contactId, campaignId: campaignId } }"
+                    class="text-sm text-blue-600 transition-colors hover:text-blue-800"
+                  >
+                    Draft Outreach
+                  </router-link>
                   <button
                     class="text-sm text-red-600 transition-colors hover:text-red-800"
                     @click="handleRemoveContact(p.contactId)"
