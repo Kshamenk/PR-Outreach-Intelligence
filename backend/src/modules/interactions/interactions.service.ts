@@ -60,9 +60,12 @@ export async function createInteraction(
     );
     if (isOutbound) {
       await interactionsRepo.updateContactLastContacted(dto.contactId, client);
+      if (dto.campaignId) {
+        await interactionsRepo.updateCampaignContactStatus(dto.campaignId, dto.contactId, "contacted", client);
+      }
     }
     await contactsRepo.recalculateScore(dto.contactId, client);
-    await logEvent(userId, "interaction", row.id, "created", { direction: dto.direction, channel: dto.channel }, client);
+    await logEvent(userId, "interaction", row.id, "created", { direction: dto.direction, channel: dto.channel, subject: dto.subject ?? null, contactName: contact.name }, client);
     await client.query("COMMIT");
     return toResponseDTO(row);
   } catch (err) {

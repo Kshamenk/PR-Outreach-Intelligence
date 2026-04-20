@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS ai_suggestions (
   campaign_id      INT REFERENCES campaigns(id) ON DELETE SET NULL,
   subject          TEXT NOT NULL,
   body             TEXT NOT NULL,
-  status           VARCHAR(50) NOT NULL DEFAULT 'draft',
+  status           VARCHAR(50) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'accepted', 'rejected', 'sent')),
   model            VARCHAR(100),
   prompt_version   VARCHAR(50),
   used_at          TIMESTAMPTZ,
