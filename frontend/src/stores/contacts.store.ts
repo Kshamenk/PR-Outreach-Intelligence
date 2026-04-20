@@ -8,6 +8,7 @@ import type {
   PaginatedResult,
 } from '@pr-outreach/shared-types'
 import * as contactsApi from '@/api/contacts.api'
+import { useNotifications } from '@/composables/useNotifications'
 
 export const useContactsStore = defineStore('contacts', () => {
   const items = ref<ContactListItemDTO[]>([])
@@ -15,6 +16,7 @@ export const useContactsStore = defineStore('contacts', () => {
   const current = ref<ContactResponseDTO | null>(null)
   const loading = ref(false)
   const error = ref('')
+  const { notify } = useNotifications()
 
   async function fetchList(limit = 50, offset = 0): Promise<void> {
     loading.value = true
@@ -44,6 +46,7 @@ export const useContactsStore = defineStore('contacts', () => {
 
   async function create(dto: CreateContactDTO): Promise<ContactResponseDTO> {
     const result = await contactsApi.createContact(dto)
+    notify({ type: 'success', message: 'Contact created' })
     await fetchList()
     return result
   }
@@ -51,6 +54,7 @@ export const useContactsStore = defineStore('contacts', () => {
   async function update(id: number, dto: UpdateContactDTO): Promise<ContactResponseDTO> {
     const result = await contactsApi.updateContact(id, dto)
     if (current.value?.id === id) current.value = result
+    notify({ type: 'success', message: 'Contact updated' })
     await fetchList()
     return result
   }
@@ -58,6 +62,7 @@ export const useContactsStore = defineStore('contacts', () => {
   async function archive(id: number): Promise<void> {
     await contactsApi.deleteContact(id)
     if (current.value?.id === id) current.value = null
+    notify({ type: 'success', message: 'Contact archived' })
     await fetchList()
   }
 

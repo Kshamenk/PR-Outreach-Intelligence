@@ -26,6 +26,19 @@ export interface GenerateOutreachResponseDTO {
   promptVersion: string;
 }
 
+export interface AISuggestionDTO {
+  id: number;
+  contactId: number;
+  campaignId: number | null;
+  subject: string;
+  body: string;
+  status: string;
+  model: string | null;
+  promptVersion: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── Context (used internally and by AI module) ──
 
 export interface AIContextDTO {

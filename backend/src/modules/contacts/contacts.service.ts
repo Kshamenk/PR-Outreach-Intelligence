@@ -40,7 +40,7 @@ export async function createContact(
   dto: CreateContactDTO
 ): Promise<ContactResponseDTO> {
   const row = await contactsRepo.create(userId, dto.name, dto.email, dto.outlet, dto.topics);
-  await logEvent(userId, "contact", row.id, "created");
+  await logEvent(userId, "contact", row.id, "created", { name: row.name });
   return toResponseDTO(row);
 }
 
@@ -79,12 +79,12 @@ export async function updateContact(
 
   const row = await contactsRepo.update(userId, contactId, fields);
   if (!row) throw new NotFoundError("Contact not found");
-  await logEvent(userId, "contact", contactId, "updated");
+  await logEvent(userId, "contact", contactId, "updated", { name: row.name });
   return toResponseDTO(row);
 }
 
 export async function deleteContact(userId: number, contactId: number): Promise<void> {
   const row = await contactsRepo.softDelete(userId, contactId);
   if (!row) throw new NotFoundError("Contact not found");
-  await logEvent(userId, "contact", contactId, "archived");
+  await logEvent(userId, "contact", contactId, "archived", { name: row.name });
 }

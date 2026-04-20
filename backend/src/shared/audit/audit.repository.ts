@@ -16,7 +16,8 @@ export type AuditEntityType =
   | "campaign"
   | "interaction"
   | "campaign_contact"
-  | "ai_suggestion";
+  | "ai_suggestion"
+  | "messaging";
 
 export async function logEvent(
   userId: number | null,
