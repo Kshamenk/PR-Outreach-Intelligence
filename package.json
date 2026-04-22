@@ -9,5 +9,13 @@
     "build:backend": "pnpm --filter @pr-outreach/backend build",
     "build:frontend": "pnpm --filter @pr-outreach/frontend build",
     "migrate": "pnpm --filter @pr-outreach/backend migrate"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": ["happy-dom"]
+    },
+    "overrides": {
+      "happy-dom": "npm:@pnpm/empty-pkg@1.0.0"
+    }
   }
 }
