@@ -1,0 +1,209 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "10"
+
+jobs:
+  # ─── Shared-types build (dependency for all other jobs) ───
+  build-shared:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @pr-outreach/shared-types build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shared-types-dist
+          path: packages/shared-types/dist/
+          retention-days: 1
+
+  # ─── Backend unit + integration tests ───
+  test-backend:
+    needs: build-shared
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pr_ai_db_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      PORT: 3001
+      NODE_ENV: test
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: pr_ai_db_test
+      JWT_SECRET: ci-test-secret-min16chars
+      JWT_EXPIRES_IN: 5m
+      JWT_REFRESH_EXPIRES_IN: 1d
+      CORS_ORIGIN: http://localhost:5173
+      AI_PROVIDER: openai
+      AI_PROVIDER_API_KEY: test-key
+      AI_PROVIDER_MODEL: gpt-4o-mini
+      GEMINI_API_KEY: test-gemini-key
+      GEMINI_MODEL: gemini-2.0-flash
+      EMAIL_PROVIDER: console
+      EMAIL_FROM_ADDRESS: ci@test.com
+      EMAIL_FROM_NAME: CI Test
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: shared-types-dist
+          path: packages/shared-types/dist/
+      - name: Run migrations
+        run: pnpm --filter @pr-outreach/backend migrate:test
+      - name: Run backend tests
+        run: pnpm --filter @pr-outreach/backend test
+
+  # ─── Frontend unit + component tests ───
+  test-frontend:
+    needs: build-shared
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: shared-types-dist
+          path: packages/shared-types/dist/
+      - name: Run frontend tests
+        run: pnpm --filter @pr-outreach/frontend test
+
+  # ─── Build check (ensures both packages compile) ───
+  build:
+    needs: build-shared
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: shared-types-dist
+          path: packages/shared-types/dist/
+      - name: Build backend
+        run: pnpm --filter @pr-outreach/backend build
+      - name: Build frontend
+        run: pnpm --filter @pr-outreach/frontend build-only
+
+  # ─── E2E smoke tests (only on main branch or PRs to main) ───
+  test-e2e:
+    needs: [test-backend, test-frontend]
+    if: github.ref == 'refs/heads/main' || github.base_ref == 'main'
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pr_ai_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      PORT: 3000
+      NODE_ENV: development
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: pr_ai_db
+      JWT_SECRET: ci-e2e-secret-min16chars
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      CORS_ORIGIN: http://localhost:5173
+      AI_PROVIDER: openai
+      AI_PROVIDER_API_KEY: test-key
+      AI_PROVIDER_MODEL: gpt-4o-mini
+      GEMINI_API_KEY: test-gemini-key
+      GEMINI_MODEL: gemini-2.0-flash
+      EMAIL_PROVIDER: console
+      EMAIL_FROM_ADDRESS: ci@test.com
+      EMAIL_FROM_NAME: CI E2E
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: shared-types-dist
+          path: packages/shared-types/dist/
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Run migrations
+        run: pnpm --filter @pr-outreach/backend migrate
+      - name: Run E2E tests
+        run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: test-results/
+          retention-days: 7
