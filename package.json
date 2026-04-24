@@ -8,14 +8,24 @@
     "build": "pnpm --filter @pr-outreach/shared-types build && pnpm run --parallel build:backend build:frontend",
     "build:backend": "pnpm --filter @pr-outreach/backend build",
     "build:frontend": "pnpm --filter @pr-outreach/frontend build",
-    "migrate": "pnpm --filter @pr-outreach/backend migrate"
+    "migrate": "pnpm --filter @pr-outreach/backend migrate",
+    "test": "pnpm --filter @pr-outreach/backend test && pnpm --filter @pr-outreach/frontend test",
+    "test:backend": "pnpm --filter @pr-outreach/backend test",
+    "test:frontend": "pnpm --filter @pr-outreach/frontend test",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed"
   },
   "pnpm": {
     "peerDependencyRules": {
-      "ignoreMissing": ["happy-dom"]
+      "ignoreMissing": [
+        "happy-dom"
+      ]
     },
     "overrides": {
       "happy-dom": "npm:@pnpm/empty-pkg@1.0.0"
     }
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
   }
 }

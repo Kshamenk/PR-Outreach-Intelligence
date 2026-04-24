@@ -1,4 +1,16 @@
 import { pool } from "../config/db";
+import jwt from "jsonwebtoken";
+import { env } from "../config/env";
+import app from "../app";
+
+export { app };
+
+/**
+ * Generate a valid JWT access token for a test user.
+ */
+export function authToken(userId: number, email = "test@example.com"): string {
+  return jwt.sign({ userId, email }, env.JWT_SECRET, { expiresIn: "15m" });
+}
 
 /**
  * Truncate all tables between test suites to ensure isolation.
