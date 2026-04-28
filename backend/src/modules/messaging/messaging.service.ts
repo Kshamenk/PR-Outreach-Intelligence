@@ -1,5 +1,5 @@
 import { pool } from "../../config/db";
-import { NotFoundError, BadRequestError } from "../../shared/errors/AppError";
+import { NotFoundError, BadRequestError, AppError } from "../../shared/errors/AppError";
 import * as contactsRepo from "../contacts/contacts.repository";
 import * as campaignsRepo from "../campaigns/campaigns.repository";
 import * as interactionsRepo from "../interactions/interactions.repository";
@@ -24,86 +24,115 @@ export async function send(
     if (!campaign) throw new NotFoundError("Campaign not found");
   }
 
-  // 3. Validate AI suggestion (if provided)
-  if (dto.aiSuggestionId) {
-    const suggestion = await aiRepo.findById(userId, dto.aiSuggestionId);
-    if (!suggestion)
-      throw new NotFoundError("AI suggestion not found");
-    if (suggestion.status !== "accepted")
-      throw new BadRequestError(
-        `Cannot send: suggestion status is '${suggestion.status}', expected 'accepted'`
-      );
-  }
-
-  // 4. Send via email provider (before transaction — can't rollback a sent email)
-  const { providerMessageId } = await sendEmail(
-    contact.email,
-    dto.subject,
-    dto.body
-  );
-
-  // 5. Record everything in a transaction
+  // 3. Lock and validate AI suggestion inside transaction to prevent TOCTOU
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
-    // Create interaction
-    const interaction = await interactionsRepo.create(
-      userId,
-      dto.contactId,
-      dto.campaignId ?? null,
-      "outbound",
-      "email",
-      "sent",
-      dto.body,
+    if (dto.aiSuggestionId) {
+      const { rows: lockedRows } = await client.query<aiRepo.AISuggestionRow>(
+        "SELECT * FROM ai_suggestions WHERE id = $1 AND user_id = $2 FOR UPDATE",
+        [dto.aiSuggestionId, userId]
+      );
+      const suggestion = lockedRows[0] ?? null;
+      if (!suggestion)
+        throw new NotFoundError("AI suggestion not found");
+      if (suggestion.status !== "accepted")
+        throw new BadRequestError(
+          `Cannot send: suggestion status is '${suggestion.status}', expected 'accepted'`
+        );
+    }
+
+    // 4. Send via email provider
+    const { providerMessageId } = await sendEmail(
+      contact.email,
       dto.subject,
-      null, // occurredAt = NOW()
-      providerMessageId,
-      null, // externalThreadId
-      dto.aiSuggestionId
-        ? { aiSuggestionId: dto.aiSuggestionId }
-        : null,
-      client
+      dto.body
     );
 
-    // Update contact last_contacted_at
-    await interactionsRepo.updateContactLastContacted(dto.contactId, client);
-
-    // Update campaign_contacts status
-    if (dto.campaignId) {
-      await interactionsRepo.updateCampaignContactStatus(
-        dto.campaignId,
+    // 5. Record everything in the same transaction
+    let interaction;
+    try {
+      interaction = await interactionsRepo.create(
+        userId,
         dto.contactId,
-        "contacted",
+        dto.campaignId ?? null,
+        "outbound",
+        "email",
+        "sent",
+        dto.body,
+        dto.subject,
+        null, // occurredAt = NOW()
+        providerMessageId,
+        null, // externalThreadId
+        dto.aiSuggestionId
+          ? { aiSuggestionId: dto.aiSuggestionId }
+          : null,
         client
       );
+
+      // Update contact last_contacted_at
+      await interactionsRepo.updateContactLastContacted(dto.contactId, client);
+
+      // Update campaign_contacts status
+      if (dto.campaignId) {
+        await interactionsRepo.updateCampaignContactStatus(
+          dto.campaignId,
+          dto.contactId,
+          "contacted",
+          client
+        );
+      }
+
+      // Recalculate contact score
+      await contactsRepo.recalculateScore(dto.contactId, client);
+
+      // Mark AI suggestion as sent
+      if (dto.aiSuggestionId) {
+        await aiRepo.markSent(userId, dto.aiSuggestionId, client);
+      }
+
+      // Audit
+      await logEvent(
+        userId,
+        "messaging",
+        interaction.id,
+        "created",
+        {
+          channel: "email",
+          contactId: dto.contactId,
+          campaignId: dto.campaignId ?? null,
+          providerMessageId,
+          aiSuggestionId: dto.aiSuggestionId ?? null,
+        },
+        client
+      );
+
+      await client.query("COMMIT");
+    } catch (txErr) {
+      await client.query("ROLLBACK");
+
+      // Email was already sent — persist a minimal recovery record so it's not lost
+      console.error("Transaction failed after email was sent. Persisting recovery record.", txErr);
+      try {
+        await pool.query(
+          `INSERT INTO interactions
+             (user_id, contact_id, campaign_id, direction, channel, status,
+              content, subject, provider_message_id, metadata)
+           VALUES ($1, $2, $3, 'outbound', 'email', 'sent', $4, $5, $6, $7)`,
+          [
+            userId, dto.contactId, dto.campaignId ?? null,
+            dto.body, dto.subject, providerMessageId,
+            JSON.stringify({ recovery: true, originalError: String(txErr) }),
+          ]
+        );
+      } catch (recoveryErr) {
+        console.error("CRITICAL: Recovery record also failed. Email sent without DB record:", {
+          providerMessageId, contactId: dto.contactId, userId,
+        }, recoveryErr);
+      }
+      throw txErr;
     }
-
-    // Recalculate contact score
-    await contactsRepo.recalculateScore(dto.contactId, client);
-
-    // Mark AI suggestion as sent
-    if (dto.aiSuggestionId) {
-      await aiRepo.markSent(userId, dto.aiSuggestionId, client);
-    }
-
-    // Audit
-    await logEvent(
-      userId,
-      "messaging",
-      interaction.id,
-      "created",
-      {
-        channel: "email",
-        contactId: dto.contactId,
-        campaignId: dto.campaignId ?? null,
-        providerMessageId,
-        aiSuggestionId: dto.aiSuggestionId ?? null,
-      },
-      client
-    );
-
-    await client.query("COMMIT");
 
     return {
       interactionId: interaction.id,
@@ -111,7 +140,7 @@ export async function send(
       status: "sent",
     };
   } catch (err) {
-    await client.query("ROLLBACK");
+    if (err instanceof AppError) throw err;
     throw err;
   } finally {
     client.release();

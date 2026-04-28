@@ -53,9 +53,10 @@ export async function getContact(userId: number, contactId: number): Promise<Con
 export async function listContacts(
   userId: number,
   limit: number,
-  offset: number
+  offset: number,
+  search?: string
 ): Promise<PaginatedResult<ContactListItemDTO>> {
-  const { rows, total } = await contactsRepo.findAllByUser(userId, limit, offset);
+  const { rows, total } = await contactsRepo.findAllByUser(userId, limit, offset, search);
   return { data: rows.map(toListItemDTO), total, limit, offset };
 }
 

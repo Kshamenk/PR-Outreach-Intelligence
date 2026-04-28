@@ -39,25 +39,36 @@ function onConfirm() {
 <template>
   <dialog
     ref="dialogRef"
-    class="rounded-xl bg-white p-0 shadow-xl backdrop:bg-black/40"
+    class="rounded-2xl bg-[var(--color-surface)] p-0 shadow-2xl backdrop:bg-black/50 backdrop:backdrop-blur-sm"
     @cancel.prevent="onCancel"
   >
-    <div class="w-96 p-6">
-      <h3 class="text-lg font-semibold text-gray-900">{{ title }}</h3>
-      <p class="mt-2 text-sm text-gray-600">{{ message }}</p>
-      <div class="mt-6 flex justify-end gap-3">
+    <div class="w-[26rem]">
+      <div class="flex items-center justify-between border-b border-[var(--color-border)] px-6 pt-6 pb-4">
+        <h3 class="text-lg font-semibold text-[var(--color-text-primary)]">{{ title }}</h3>
         <button
-          class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+          type="button"
+          class="rounded-lg p-1 text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)]"
+          @click="onCancel"
+        >
+          <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+      <div class="px-6 py-5">
+        <p class="text-sm leading-relaxed text-[var(--color-text-secondary)]">{{ message }}</p>
+      </div>
+      <div class="flex justify-end gap-3 border-t border-[var(--color-border)] px-6 py-4">
+        <button
+          class="rounded-xl border border-[var(--color-border)] px-5 py-2.5 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-secondary)]"
           @click="onCancel"
         >
           Cancel
         </button>
         <button
           :class="[
-            'rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors',
+            'rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:shadow-md',
             variant === 'danger'
-              ? 'bg-red-600 hover:bg-red-700'
-              : 'bg-blue-600 hover:bg-blue-700',
+              ? 'bg-[var(--color-danger)] hover:bg-[var(--color-danger-hover)]'
+              : 'bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]',
           ]"
           @click="onConfirm"
         >

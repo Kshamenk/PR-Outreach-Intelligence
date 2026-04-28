@@ -14,7 +14,7 @@ export async function getStats(userId: number): Promise<StatsRow> {
        (SELECT COUNT(*) FROM contacts WHERE user_id = $1 AND archived_at IS NULL) AS total_contacts,
        (SELECT COUNT(*) FROM campaigns WHERE user_id = $1 AND status = 'active' AND archived_at IS NULL) AS active_campaigns,
        (SELECT COUNT(*) FROM interactions WHERE user_id = $1 AND direction = 'outbound' AND channel = 'email' AND status = 'sent') AS emails_sent,
-       (SELECT COUNT(*) FROM interactions WHERE user_id = $1 AND direction = 'inbound' AND status = 'replied') AS replies_received,
+       (SELECT COUNT(*) FROM interactions WHERE user_id = $1 AND direction = 'inbound') AS replies_received,
        (SELECT COUNT(*) FROM ai_suggestions WHERE user_id = $1 AND status = 'draft') AS drafts_pending`,
     [userId]
   );

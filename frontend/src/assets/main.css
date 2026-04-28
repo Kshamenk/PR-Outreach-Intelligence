@@ -1,1 +1,51 @@
 @import 'tailwindcss';
+
+/* ── Design tokens ── */
+:root {
+  --color-bg-primary: #f8fafc;
+  --color-bg-secondary: #f1f5f9;
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-accent: #3b82f6;
+  --color-accent-hover: #2563eb;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-danger-hover: #dc2626;
+}
+
+.dark {
+  --color-bg-primary: #0f172a;
+  --color-bg-secondary: #111827;
+  --color-surface: #1f2933;
+  --color-border: #2d3748;
+  --color-text-primary: #e5e7eb;
+  --color-text-secondary: #9ca3af;
+  --color-accent: #60a5fa;
+  --color-accent-hover: #93c5fd;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+  --color-danger-hover: #fca5a5;
+}
+
+dialog::backdrop {
+  /* handled by Tailwind backdrop: utilities */
+}
+
+dialog[open] {
+  margin: auto;
+}
+
+@keyframes skeleton-fade-in {
+  0% { opacity: 0; visibility: hidden; }
+  100% { opacity: 1; visibility: visible; }
+}
+
+.skeleton-delay {
+  visibility: hidden;
+  opacity: 0;
+  animation: skeleton-fade-in 0.4s ease-out 1s both;
+}
