@@ -9,7 +9,8 @@ export async function create(req: Request, res: Response): Promise<void> {
 
 export async function list(req: Request, res: Response): Promise<void> {
   const { limit, offset } = parsePagination(req.query as Record<string, unknown>);
-  const result = await contactsService.listContacts(req.user!.userId, limit, offset);
+  const search = typeof req.query.search === "string" ? req.query.search : undefined;
+  const result = await contactsService.listContacts(req.user!.userId, limit, offset, search);
   res.json(result);
 }
 

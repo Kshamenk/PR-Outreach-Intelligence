@@ -25,6 +25,12 @@ function remove(id: number) {
 }
 
 function notify(opts: { type: NotificationType; message: string }) {
+  // Deduplicate identical notifications within a short window
+  const duplicate = items.value.find(
+    (n) => n.type === opts.type && n.message === opts.message
+  )
+  if (duplicate) return
+
   const id = nextId++
   const notification: Notification = { id, ...opts }
 

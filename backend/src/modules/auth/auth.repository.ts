@@ -111,3 +111,17 @@ export async function revokeAllUserSessions(userId: number): Promise<void> {
     [userId]
   );
 }
+
+/**
+ * Remove expired and revoked sessions older than the given number of days.
+ * Should be called periodically to prevent unbounded table growth.
+ */
+export async function cleanupExpiredSessions(olderThanDays = 7): Promise<number> {
+  const { rowCount } = await pool.query(
+    `DELETE FROM auth_sessions
+     WHERE (expires_at < NOW() - $1::interval)
+       AND (revoked_at IS NOT NULL OR expires_at < NOW())`,
+    [`${olderThanDays} days`]
+  );
+  return rowCount ?? 0;
+}

@@ -42,7 +42,7 @@ describe('ContactsStore', () => {
     const store = useContactsStore()
     await store.fetchList()
 
-    expect(api.listContacts).toHaveBeenCalledWith(50, 0)
+    expect(api.listContacts).toHaveBeenCalledWith(50, 0, undefined)
     expect(store.items).toHaveLength(2)
     expect(store.total).toBe(2)
     expect(store.loading).toBe(false)

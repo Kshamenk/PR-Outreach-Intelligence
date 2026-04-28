@@ -19,10 +19,14 @@ export const useCampaignsStore = defineStore('campaigns', () => {
   const loading = ref(false)
   const error = ref('')
   const { notify } = useNotifications()
+  const currentLimit = ref(50)
+  const currentOffset = ref(0)
 
   async function fetchList(limit = 50, offset = 0): Promise<void> {
     loading.value = true
     error.value = ''
+    currentLimit.value = limit
+    currentOffset.value = offset
     try {
       const res: PaginatedResult<CampaignResponseDTO> = await campaignsApi.listCampaigns(limit, offset)
       items.value = res.data
@@ -49,7 +53,7 @@ export const useCampaignsStore = defineStore('campaigns', () => {
   async function create(dto: CreateCampaignDTO): Promise<CampaignResponseDTO> {
     const result = await campaignsApi.createCampaign(dto)
     notify({ type: 'success', message: 'Campaign created' })
-    await fetchList()
+    await fetchList(currentLimit.value, currentOffset.value)
     return result
   }
 
@@ -57,7 +61,7 @@ export const useCampaignsStore = defineStore('campaigns', () => {
     const result = await campaignsApi.updateCampaign(id, dto)
     if (current.value?.id === id) current.value = result
     notify({ type: 'success', message: 'Campaign updated' })
-    await fetchList()
+    await fetchList(currentLimit.value, currentOffset.value)
     return result
   }
 
@@ -65,7 +69,7 @@ export const useCampaignsStore = defineStore('campaigns', () => {
     await campaignsApi.deleteCampaign(id)
     if (current.value?.id === id) current.value = null
     notify({ type: 'success', message: 'Campaign archived' })
-    await fetchList()
+    await fetchList(currentLimit.value, currentOffset.value)
   }
 
   async function fetchParticipants(campaignId: number): Promise<void> {

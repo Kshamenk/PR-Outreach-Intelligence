@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useContactsStore } from '@/stores/contacts.store'
 import PaginationControls from '@/components/ui/PaginationControls.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ContactFormModal from '@/components/contacts/ContactFormModal.vue'
 import { formatRelativeDate } from '@/utils/date'
+import TableSkeleton from '@/components/ui/skeletons/TableSkeleton.vue'
 
 const router = useRouter()
 const store = useContactsStore()
@@ -15,12 +16,14 @@ const offset = ref(0)
 const search = ref('')
 const showCreate = ref(false)
 
-const filtered = computed(() => {
-  if (!search.value) return store.items
-  const q = search.value.toLowerCase()
-  return store.items.filter(
-    (c) => c.name.toLowerCase().includes(q) || c.outlet.toLowerCase().includes(q),
-  )
+let searchTimeout: ReturnType<typeof setTimeout> | null = null
+
+watch(search, (val) => {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    offset.value = 0
+    store.fetchList(limit, 0, val)
+  }, 300)
 })
 
 function scoreColor(score: number): string {
@@ -44,9 +47,9 @@ onMounted(() => store.fetchList(limit, 0))
 <template>
   <div>
     <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-bold text-gray-900">Contacts</h1>
+      <h1 class="text-2xl font-bold text-[var(--color-text-primary)]">Contacts</h1>
       <button
-        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+        class="rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
         @click="showCreate = true"
       >
         + Add Contact
@@ -58,15 +61,15 @@ onMounted(() => store.fetchList(limit, 0))
       <input
         v-model="search"
         placeholder="Filter by name or outlet…"
-        class="w-full max-w-sm rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+        class="w-full max-w-sm rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)] shadow-sm focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] focus:outline-none"
       />
     </div>
 
     <!-- Loading -->
-    <div v-if="store.loading" class="mt-8 text-center text-gray-500">Loading…</div>
+    <TableSkeleton v-if="store.loading" :columns="5" :rows="6" />
 
     <!-- Error -->
-    <div v-else-if="store.error" class="mt-4 rounded-lg bg-red-50 p-4 text-sm text-red-700">
+    <div v-else-if="store.error" class="mt-4 rounded-lg bg-[var(--color-danger)]/10 p-4 text-sm text-[var(--color-danger)]">
       {{ store.error }}
     </div>
 
@@ -81,35 +84,35 @@ onMounted(() => store.fetchList(limit, 0))
     />
 
     <!-- Table -->
-    <div v-else class="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
+    <div v-else class="mt-4 overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
+      <table class="min-w-full divide-y divide-[var(--color-border)]">
+        <thead class="bg-[var(--color-bg-secondary)]">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Name</th>
-            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Outlet</th>
-            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Score</th>
-            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Last Contacted</th>
-            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Campaigns</th>
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)]">Name</th>
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)]">Outlet</th>
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)]">Score</th>
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)]">Last Contacted</th>
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)]">Campaigns</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-200">
+        <tbody class="divide-y divide-[var(--color-border)]">
           <tr
-            v-for="contact in filtered"
+            v-for="contact in store.items"
             :key="contact.id"
-            class="cursor-pointer transition-colors hover:bg-gray-50"
+            class="cursor-pointer transition-colors hover:bg-[var(--color-bg-secondary)]"
             @click="goToDetail(contact.id)"
           >
-            <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{{ contact.name }}</td>
-            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-600">{{ contact.outlet }}</td>
+            <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-[var(--color-text-primary)]">{{ contact.name }}</td>
+            <td class="whitespace-nowrap px-6 py-4 text-sm text-[var(--color-text-secondary)]">{{ contact.outlet }}</td>
             <td class="whitespace-nowrap px-6 py-4">
               <span :class="['rounded-full px-2 py-0.5 text-xs font-medium', scoreColor(contact.score)]">
                 {{ contact.score }}
               </span>
             </td>
-            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+            <td class="whitespace-nowrap px-6 py-4 text-sm text-[var(--color-text-secondary)]">
               {{ contact.lastContactedAt ? formatRelativeDate(contact.lastContactedAt) : '—' }}
             </td>
-            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{{ contact.campaignCount }}</td>
+            <td class="whitespace-nowrap px-6 py-4 text-sm text-[var(--color-text-secondary)]">{{ contact.campaignCount }}</td>
           </tr>
         </tbody>
       </table>

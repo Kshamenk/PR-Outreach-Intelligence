@@ -50,14 +50,24 @@ export async function findById(userId: number, contactId: number): Promise<Conta
 export async function findAllByUser(
   userId: number,
   limit: number,
-  offset: number
+  offset: number,
+  search?: string
 ): Promise<{ rows: ContactListRow[]; total: number }> {
+  const params: unknown[] = [userId];
+  let searchClause = "";
+  if (search && search.trim()) {
+    params.push(`%${search.trim()}%`);
+    searchClause = ` AND (c.name ILIKE $${params.length} OR c.outlet ILIKE $${params.length})`;
+  }
+
   const countResult = await pool.query<{ count: string }>(
-    "SELECT COUNT(*) FROM contacts WHERE user_id = $1 AND archived_at IS NULL",
-    [userId]
+    `SELECT COUNT(*) FROM contacts c WHERE c.user_id = $1 AND c.archived_at IS NULL${searchClause}`,
+    params
   );
   const total = parseInt(countResult.rows[0].count, 10);
 
+  const limitIdx = params.length + 1;
+  const offsetIdx = params.length + 2;
   const { rows } = await pool.query<ContactListRow>(
     `SELECT
        c.id,
@@ -68,11 +78,11 @@ export async function findAllByUser(
        COUNT(cc.id)::text AS campaign_count
      FROM contacts c
      LEFT JOIN campaign_contacts cc ON cc.contact_id = c.id
-     WHERE c.user_id = $1 AND c.archived_at IS NULL
+     WHERE c.user_id = $1 AND c.archived_at IS NULL${searchClause}
      GROUP BY c.id
      ORDER BY c.created_at DESC
-     LIMIT $2 OFFSET $3`,
-    [userId, limit, offset]
+     LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+    [...params, limit, offset]
   );
   return { rows, total };
 }
@@ -113,7 +123,7 @@ export async function findByIds(userId: number, contactIds: number[]): Promise<C
   if (contactIds.length === 0) return [];
   const placeholders = contactIds.map((_, i) => `$${i + 2}`).join(", ");
   const { rows } = await pool.query<ContactRow>(
-    `SELECT * FROM contacts WHERE id IN (${placeholders}) AND user_id = $1`,
+    `SELECT * FROM contacts WHERE id IN (${placeholders}) AND user_id = $1 AND archived_at IS NULL`,
     [userId, ...contactIds]
   );
   return rows;
@@ -131,7 +141,7 @@ export async function softDelete(userId: number, contactId: number): Promise<Con
 
 /**
  * Recalculates relationship_score for a contact based on interactions.
- * Scoring: +1 per outbound, +3 per replied, -1 per 30 days of inactivity.
+ * Scoring: +1 per outbound (not replied), +3 per replied (any direction), -1 per 30 days of inactivity.
  * Score is clamped to [0, 100].
  */
 export async function recalculateScore(
@@ -141,7 +151,7 @@ export async function recalculateScore(
   const q = client ?? pool;
   const { rows } = await q.query<{ score: string }>(
     `SELECT GREATEST(0, LEAST(100,
-       COALESCE(SUM(CASE WHEN direction = 'outbound' THEN 1 ELSE 0 END), 0)
+       COALESCE(SUM(CASE WHEN direction = 'outbound' AND status != 'replied' THEN 1 ELSE 0 END), 0)
        + COALESCE(SUM(CASE WHEN status = 'replied' THEN 3 ELSE 0 END), 0)
        - GREATEST(0, EXTRACT(EPOCH FROM (NOW() - MAX(occurred_at))) / 2592000)::int
      ))::int AS score

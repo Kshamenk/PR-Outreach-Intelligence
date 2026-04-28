@@ -9,6 +9,7 @@ import StatusBadge from '@/components/ui/StatusBadge.vue'
 import InteractionTimeline from '@/components/interactions/InteractionTimeline.vue'
 import InteractionForm from '@/components/interactions/InteractionForm.vue'
 import { formatDate } from '@/utils/date'
+import CampaignDetailSkeleton from '@/components/ui/skeletons/CampaignDetailSkeleton.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -82,31 +83,31 @@ onUnmounted(() => campaignsStore.clearCurrent())
 <template>
   <div>
     <button
-      class="mb-4 text-sm text-gray-500 transition-colors hover:text-gray-700"
+      class="mb-4 text-sm text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
       @click="router.push({ name: 'campaigns' })"
     >
       ← Back to Campaigns
     </button>
 
-    <div v-if="campaignsStore.loading" class="text-center text-gray-500">Loading…</div>
-    <div v-else-if="campaignsStore.error" class="rounded-lg bg-red-50 p-4 text-sm text-red-700">{{ campaignsStore.error }}</div>
+    <CampaignDetailSkeleton v-if="campaignsStore.loading" />
+    <div v-else-if="campaignsStore.error" class="rounded-lg bg-[var(--color-danger)]/10 p-4 text-sm text-[var(--color-danger)]">{{ campaignsStore.error }}</div>
 
     <template v-else-if="campaignsStore.current">
       <!-- Header -->
       <div class="flex items-start justify-between">
         <div class="flex items-center gap-3">
-          <h1 class="text-2xl font-bold text-gray-900">{{ campaignsStore.current.name }}</h1>
+          <h1 class="text-2xl font-bold text-[var(--color-text-primary)]">{{ campaignsStore.current.name }}</h1>
           <StatusBadge :label="campaignsStore.current.status" :variant="campaignsStore.current.status" />
         </div>
         <div class="flex gap-2">
           <button
-            class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            class="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-secondary)]"
             @click="showEdit = true"
           >
             Edit
           </button>
           <button
-            class="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
+            class="rounded-lg border border-[var(--color-danger)] px-4 py-2 text-sm font-medium text-[var(--color-danger)] transition-colors hover:bg-[var(--color-bg-secondary)]"
             @click="showArchive = true"
           >
             Archive
@@ -115,23 +116,23 @@ onUnmounted(() => campaignsStore.clearCurrent())
       </div>
 
       <!-- Info -->
-      <div class="mt-6 space-y-4 rounded-lg border border-gray-200 bg-white p-6">
+      <div class="mt-6 space-y-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
         <div>
-          <p class="text-xs font-medium uppercase text-gray-500">Description</p>
-          <p class="mt-1 text-sm text-gray-900">{{ campaignsStore.current.description }}</p>
+          <p class="text-xs font-medium uppercase text-[var(--color-text-secondary)]">Description</p>
+          <p class="mt-1 text-sm text-[var(--color-text-primary)]">{{ campaignsStore.current.description }}</p>
         </div>
         <div>
-          <p class="text-xs font-medium uppercase text-gray-500">Objective</p>
-          <p class="mt-1 text-sm text-gray-900">{{ campaignsStore.current.objective }}</p>
+          <p class="text-xs font-medium uppercase text-[var(--color-text-secondary)]">Objective</p>
+          <p class="mt-1 text-sm text-[var(--color-text-primary)]">{{ campaignsStore.current.objective }}</p>
         </div>
         <div class="flex gap-8">
           <div>
-            <p class="text-xs font-medium uppercase text-gray-500">Created</p>
-            <p class="mt-1 text-sm text-gray-900">{{ formatDate(campaignsStore.current.createdAt) }}</p>
+            <p class="text-xs font-medium uppercase text-[var(--color-text-secondary)]">Created</p>
+            <p class="mt-1 text-sm text-[var(--color-text-primary)]">{{ formatDate(campaignsStore.current.createdAt) }}</p>
           </div>
           <div>
-            <p class="text-xs font-medium uppercase text-gray-500">Updated</p>
-            <p class="mt-1 text-sm text-gray-900">{{ formatDate(campaignsStore.current.updatedAt) }}</p>
+            <p class="text-xs font-medium uppercase text-[var(--color-text-secondary)]">Updated</p>
+            <p class="mt-1 text-sm text-[var(--color-text-primary)]">{{ formatDate(campaignsStore.current.updatedAt) }}</p>
           </div>
         </div>
       </div>
@@ -139,54 +140,54 @@ onUnmounted(() => campaignsStore.clearCurrent())
       <!-- Participants -->
       <div class="mt-8">
         <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-gray-900">
+          <h2 class="text-lg font-semibold text-[var(--color-text-primary)]">
             Participants
-            <span class="text-sm font-normal text-gray-500">({{ campaignsStore.participants.length }})</span>
+            <span class="text-sm font-normal text-[var(--color-text-secondary)]">({{ campaignsStore.participants.length }})</span>
           </h2>
           <button
-            class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            class="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-secondary)]"
             @click="openAddContacts"
           >
             + Add Contacts
           </button>
         </div>
 
-        <div v-if="campaignsStore.participants.length === 0" class="mt-4 text-sm text-gray-500">
+        <div v-if="campaignsStore.participants.length === 0" class="mt-4 text-sm text-[var(--color-text-secondary)]">
           No contacts added to this campaign yet.
         </div>
 
-        <div v-else class="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+        <div v-else class="mt-4 overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
+          <table class="min-w-full divide-y divide-[var(--color-border)]">
+            <thead class="bg-[var(--color-bg-secondary)]">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Name</th>
-                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Outlet</th>
-                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Last Outreach</th>
-                <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500"></th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)]">Name</th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)]">Outlet</th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)]">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)]">Last Outreach</th>
+                <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)]"></th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
+            <tbody class="divide-y divide-[var(--color-border)]">
               <tr v-for="p in campaignsStore.participants" :key="p.campaignContactId">
-                <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                  <router-link :to="{ name: 'contact-detail', params: { id: p.contactId } }" class="hover:text-blue-600">
+                <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-[var(--color-text-primary)]">
+                  <router-link :to="{ name: 'contact-detail', params: { id: p.contactId } }" class="hover:text-[var(--color-accent)]">
                     {{ p.contactName }}
                   </router-link>
                 </td>
-                <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-600">{{ p.outlet }}</td>
-                <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{{ p.status }}</td>
-                <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                <td class="whitespace-nowrap px-6 py-4 text-sm text-[var(--color-text-secondary)]">{{ p.outlet }}</td>
+                <td class="whitespace-nowrap px-6 py-4 text-sm text-[var(--color-text-secondary)]">{{ p.status }}</td>
+                <td class="whitespace-nowrap px-6 py-4 text-sm text-[var(--color-text-secondary)]">
                   {{ p.lastOutreachAt ? formatDate(p.lastOutreachAt) : '—' }}
                 </td>
                 <td class="whitespace-nowrap px-6 py-4 text-right space-x-3">
                   <router-link
                     :to="{ name: 'outreach', query: { contactId: p.contactId, campaignId: campaignId } }"
-                    class="text-sm text-blue-600 transition-colors hover:text-blue-800"
+                    class="text-sm text-[var(--color-accent)] transition-colors hover:text-[var(--color-accent-hover)]"
                   >
                     Draft Outreach
                   </router-link>
                   <button
-                    class="text-sm text-red-600 transition-colors hover:text-red-800"
+                    class="text-sm text-[var(--color-danger)] transition-colors hover:text-[var(--color-danger-hover)]"
                     @click="handleRemoveContact(p.contactId)"
                   >
                     Remove
@@ -201,9 +202,9 @@ onUnmounted(() => campaignsStore.clearCurrent())
       <!-- Interactions -->
       <div class="mt-8">
         <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-gray-900">Interactions</h2>
+          <h2 class="text-lg font-semibold text-[var(--color-text-primary)]">Interactions</h2>
           <button
-            class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+            class="rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
             @click="showInteractionForm = true"
           >
             + Log Interaction
@@ -236,42 +237,42 @@ onUnmounted(() => campaignsStore.clearCurrent())
     <!-- Add Contacts Modal -->
     <dialog
       ref="addContactsDialogRef"
-      class="rounded-xl bg-white p-0 shadow-xl backdrop:bg-black/40"
+      class="rounded-xl bg-[var(--color-surface)] p-0 shadow-xl backdrop:bg-black/40"
       @cancel.prevent="showAddContacts = false"
     >
       <div v-if="showAddContacts" class="w-[28rem] p-6">
-        <h3 class="text-lg font-semibold text-gray-900">Add Contacts to Campaign</h3>
-        <div v-if="contactsStore.items.length === 0" class="mt-4 text-sm text-gray-500">
+        <h3 class="text-lg font-semibold text-[var(--color-text-primary)]">Add Contacts to Campaign</h3>
+        <div v-if="contactsStore.items.length === 0" class="mt-4 text-sm text-[var(--color-text-secondary)]">
           No contacts available. Create contacts first.
         </div>
         <div v-else class="mt-4 max-h-64 space-y-2 overflow-y-auto">
           <label
             v-for="c in contactsStore.items"
             :key="c.id"
-            class="flex cursor-pointer items-center gap-3 rounded-lg p-2 transition-colors hover:bg-gray-50"
+            class="flex cursor-pointer items-center gap-3 rounded-lg p-2 transition-colors hover:bg-[var(--color-bg-secondary)]"
           >
             <input
               type="checkbox"
               :checked="selectedContactIds.includes(c.id)"
-              class="h-4 w-4 rounded border-gray-300 text-blue-600"
+              class="h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-accent)]"
               @change="toggleContact(c.id)"
             />
             <div>
-              <p class="text-sm font-medium text-gray-900">{{ c.name }}</p>
-              <p class="text-xs text-gray-500">{{ c.outlet }}</p>
+              <p class="text-sm font-medium text-[var(--color-text-primary)]">{{ c.name }}</p>
+              <p class="text-xs text-[var(--color-text-secondary)]">{{ c.outlet }}</p>
             </div>
           </label>
         </div>
         <div class="mt-6 flex justify-end gap-3">
           <button
-            class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            class="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-secondary)]"
             @click="showAddContacts = false"
           >
             Cancel
           </button>
           <button
             :disabled="!selectedContactIds.length || addingContacts"
-            class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+            class="rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)] disabled:opacity-50"
             @click="handleAddContacts"
           >
             {{ addingContacts ? 'Adding…' : `Add (${selectedContactIds.length})` }}
