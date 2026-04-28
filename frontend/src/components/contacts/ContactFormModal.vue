@@ -78,55 +78,65 @@ async function handleSubmit() {
 <template>
   <dialog
     ref="dialogRef"
-    class="rounded-xl bg-white p-0 shadow-xl backdrop:bg-black/40"
+    class="rounded-2xl bg-[var(--color-surface)] p-0 shadow-2xl backdrop:bg-black/50 backdrop:backdrop-blur-sm"
     @cancel.prevent="emit('close')"
   >
-    <form class="w-[28rem] p-6" @submit.prevent="handleSubmit">
-      <h3 class="text-lg font-semibold text-gray-900">{{ title }}</h3>
+    <form class="w-[30rem]" @submit.prevent="handleSubmit">
+      <div class="flex items-center justify-between border-b border-[var(--color-border)] px-6 pt-6 pb-4">
+        <h3 class="text-lg font-semibold text-[var(--color-text-primary)]">{{ title }}</h3>
+        <button type="button" class="rounded-lg p-1 text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)]" @click="emit('close')">
+          <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
 
-      <div v-if="error" class="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ error }}</div>
+      <div class="px-6 py-5">
+        <div v-if="error" class="mb-4 flex items-center gap-2 rounded-xl border border-[var(--color-danger)] bg-[var(--color-danger)]/10 px-4 py-3 text-sm text-[var(--color-danger)]">
+          <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" /></svg>
+          {{ error }}
+        </div>
 
-      <div class="mt-4 space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Name *</label>
-          <input
-            v-model="name"
-            required
-            class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Email *</label>
-          <input
-            v-model="email"
-            type="email"
-            required
-            class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Outlet *</label>
-          <input
-            v-model="outlet"
-            required
-            class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Topics</label>
-          <input
-            v-model="topicsRaw"
-            placeholder="tech, AI, startups"
-            class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-          />
-          <p class="mt-1 text-xs text-gray-500">Comma-separated list of topics</p>
+        <div class="space-y-5">
+          <div>
+            <label class="mb-1.5 block text-sm font-medium text-[var(--color-text-secondary)]">Name *</label>
+            <input
+              v-model="name"
+              required
+              class="block w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-4 py-2.5 text-sm text-[var(--color-text-primary)] transition-colors focus:border-[var(--color-accent)] focus:bg-[var(--color-surface)] focus:ring-1 focus:ring-[var(--color-accent)] focus:outline-none"
+            />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-sm font-medium text-[var(--color-text-secondary)]">Email *</label>
+            <input
+              v-model="email"
+              type="email"
+              required
+              class="block w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-4 py-2.5 text-sm text-[var(--color-text-primary)] transition-colors focus:border-[var(--color-accent)] focus:bg-[var(--color-surface)] focus:ring-1 focus:ring-[var(--color-accent)] focus:outline-none"
+            />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-sm font-medium text-[var(--color-text-secondary)]">Outlet *</label>
+            <input
+              v-model="outlet"
+              required
+              class="block w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-4 py-2.5 text-sm text-[var(--color-text-primary)] transition-colors focus:border-[var(--color-accent)] focus:bg-[var(--color-surface)] focus:ring-1 focus:ring-[var(--color-accent)] focus:outline-none"
+            />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-sm font-medium text-[var(--color-text-secondary)]">Topics</label>
+            <input
+              v-model="topicsRaw"
+              placeholder="tech, AI, startups"
+              class="block w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-4 py-2.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)] transition-colors focus:border-[var(--color-accent)] focus:bg-[var(--color-surface)] focus:ring-1 focus:ring-[var(--color-accent)] focus:outline-none"
+            />
+            <p class="mt-1.5 text-xs text-[var(--color-text-secondary)]">Comma-separated list of topics</p>
+          </div>
         </div>
       </div>
 
-      <div class="mt-6 flex justify-end gap-3">
+      <div class="flex justify-end gap-3 border-t border-[var(--color-border)] px-6 py-4">
         <button
           type="button"
-          class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+          class="rounded-xl border border-[var(--color-border)] px-5 py-2.5 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-secondary)]"
           @click="emit('close')"
         >
           Cancel
@@ -134,7 +144,7 @@ async function handleSubmit() {
         <button
           type="submit"
           :disabled="submitting"
-          class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+          class="rounded-xl bg-[var(--color-accent)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[var(--color-accent-hover)] hover:shadow-md disabled:opacity-50"
         >
           {{ submitting ? 'Saving…' : isEdit ? 'Update' : 'Create' }}
         </button>

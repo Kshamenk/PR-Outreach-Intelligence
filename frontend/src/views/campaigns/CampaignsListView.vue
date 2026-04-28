@@ -7,6 +7,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import StatusBadge from '@/components/ui/StatusBadge.vue'
 import CampaignFormModal from '@/components/campaigns/CampaignFormModal.vue'
 import { formatDate } from '@/utils/date'
+import TableSkeleton from '@/components/ui/skeletons/TableSkeleton.vue'
 
 const router = useRouter()
 const store = useCampaignsStore()
@@ -43,9 +44,9 @@ onMounted(() => store.fetchList(limit, 0))
 <template>
   <div>
     <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-bold text-gray-900">Campaigns</h1>
+      <h1 class="text-2xl font-bold text-[var(--color-text-primary)]">Campaigns</h1>
       <button
-        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+        class="rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
         @click="showCreate = true"
       >
         + New Campaign
@@ -57,15 +58,15 @@ onMounted(() => store.fetchList(limit, 0))
       <input
         v-model="search"
         placeholder="Filter by name or description…"
-        class="w-full max-w-sm rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+        class="w-full max-w-sm rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)] shadow-sm focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] focus:outline-none"
       />
     </div>
 
     <!-- Loading -->
-    <div v-if="store.loading" class="mt-8 text-center text-gray-500">Loading…</div>
+    <TableSkeleton v-if="store.loading" :columns="4" :rows="6" />
 
     <!-- Error -->
-    <div v-else-if="store.error" class="mt-4 rounded-lg bg-red-50 p-4 text-sm text-red-700">
+    <div v-else-if="store.error" class="mt-4 rounded-lg bg-[var(--color-danger)]/10 p-4 text-sm text-[var(--color-danger)]">
       {{ store.error }}
     </div>
 
@@ -80,29 +81,29 @@ onMounted(() => store.fetchList(limit, 0))
     />
 
     <!-- Table -->
-    <div v-else class="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
+    <div v-else class="mt-4 overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
+      <table class="min-w-full divide-y divide-[var(--color-border)]">
+        <thead class="bg-[var(--color-bg-secondary)]">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Name</th>
-            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Description</th>
-            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Created</th>
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)]">Name</th>
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)]">Description</th>
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)]">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)]">Created</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-200">
+        <tbody class="divide-y divide-[var(--color-border)]">
           <tr
             v-for="campaign in filtered"
             :key="campaign.id"
-            class="cursor-pointer transition-colors hover:bg-gray-50"
+            class="cursor-pointer transition-colors hover:bg-[var(--color-bg-secondary)]"
             @click="goToDetail(campaign.id)"
           >
-            <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{{ campaign.name }}</td>
-            <td class="px-6 py-4 text-sm text-gray-600">{{ truncate(campaign.description) }}</td>
+            <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-[var(--color-text-primary)]">{{ campaign.name }}</td>
+            <td class="px-6 py-4 text-sm text-[var(--color-text-secondary)]">{{ truncate(campaign.description) }}</td>
             <td class="whitespace-nowrap px-6 py-4">
               <StatusBadge :label="campaign.status" :variant="campaign.status" />
             </td>
-            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{{ formatDate(campaign.createdAt) }}</td>
+            <td class="whitespace-nowrap px-6 py-4 text-sm text-[var(--color-text-secondary)]">{{ formatDate(campaign.createdAt) }}</td>
           </tr>
         </tbody>
       </table>

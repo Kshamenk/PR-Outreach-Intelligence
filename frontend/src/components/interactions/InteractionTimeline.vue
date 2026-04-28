@@ -4,6 +4,7 @@ import { useInteractionsStore } from '@/stores/interactions.store'
 import PaginationControls from '@/components/ui/PaginationControls.vue'
 import StatusBadge from '@/components/ui/StatusBadge.vue'
 import { formatRelativeDate } from '@/utils/date'
+import InteractionTimelineSkeleton from '@/components/ui/skeletons/InteractionTimelineSkeleton.vue'
 
 const props = defineProps<{
   contactId?: number
@@ -48,9 +49,9 @@ onMounted(load)
 
 <template>
   <div>
-    <div v-if="store.loading" class="py-8 text-center text-sm text-gray-500">Loading interactions…</div>
+    <InteractionTimelineSkeleton v-if="store.loading" />
 
-    <div v-else-if="store.items.length === 0" class="py-8 text-center text-sm text-gray-500">
+    <div v-else-if="store.items.length === 0" class="py-8 text-center text-sm text-[var(--color-text-secondary)]">
       No interactions recorded yet.
     </div>
 
@@ -58,7 +59,7 @@ onMounted(load)
       <div
         v-for="item in store.items"
         :key="item.id"
-        class="rounded-lg border border-gray-200 bg-white p-4"
+        class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
       >
         <div class="flex items-start justify-between">
           <div class="flex items-center gap-2">
@@ -66,11 +67,11 @@ onMounted(load)
             <StatusBadge :label="item.channel" :variant="item.channel" />
             <StatusBadge :label="item.status" :variant="item.direction" />
           </div>
-          <span class="text-xs text-gray-400">{{ formatRelativeDate(item.occurredAt) }}</span>
+          <span class="text-xs text-[var(--color-text-secondary)]">{{ formatRelativeDate(item.occurredAt) }}</span>
         </div>
 
-        <p v-if="item.subject" class="mt-2 text-sm font-medium text-gray-900">{{ item.subject }}</p>
-        <p class="mt-1 text-sm text-gray-600">{{ truncate(item.content) }}</p>
+        <p v-if="item.subject" class="mt-2 text-sm font-medium text-[var(--color-text-primary)]">{{ item.subject }}</p>
+        <p class="mt-1 text-sm text-[var(--color-text-secondary)]">{{ truncate(item.content) }}</p>
       </div>
 
       <PaginationControls

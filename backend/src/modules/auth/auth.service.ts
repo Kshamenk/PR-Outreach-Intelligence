@@ -102,48 +102,60 @@ export async function refresh(
   ipAddress: string | null
 ): Promise<AuthResponseDTO> {
   const tokenHash = hashToken(token);
-  const session = await findSessionByTokenHash(tokenHash);
-  if (!session) throw new UnauthorizedError("Invalid refresh token");
-  if (session.expires_at < new Date()) {
-    await revokeSession(session.id);
-    throw new UnauthorizedError("Refresh token expired");
-  }
 
-  const user = await findUserById(session.user_id);
-  if (!user) throw new UnauthorizedError("User not found");
-
-  const accessToken = signAccessToken(user.id, user.email);
-  const newRefreshToken = crypto.randomBytes(40).toString("hex");
-  const newRefreshTokenHash = hashToken(newRefreshToken);
-  const expiresAt = parseExpiry(env.JWT_REFRESH_EXPIRES_IN);
-
-  // Revoke old + create new session in a single transaction
+  // Atomically revoke the session to prevent concurrent refresh race conditions.
+  // If two requests arrive with the same token, only one will get the row.
   const { pool } = await import("../../config/db");
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query(
-      "UPDATE auth_sessions SET revoked_at = NOW() WHERE id = $1",
-      [session.id]
+    const { rows: revokedRows } = await client.query<import("./auth.repository").SessionRow>(
+      `UPDATE auth_sessions
+       SET revoked_at = NOW()
+       WHERE refresh_token_hash = $1 AND revoked_at IS NULL
+       RETURNING *`,
+      [tokenHash]
     );
+    const session = revokedRows[0] ?? null;
+    if (!session) {
+      await client.query("ROLLBACK");
+      throw new UnauthorizedError("Invalid refresh token");
+    }
+    if (session.expires_at < new Date()) {
+      await client.query("COMMIT"); // revocation is already done
+      throw new UnauthorizedError("Refresh token expired");
+    }
+
+    const user = await findUserById(session.user_id);
+    if (!user) {
+      await client.query("COMMIT");
+      throw new UnauthorizedError("User not found");
+    }
+
+    const accessToken = signAccessToken(user.id, user.email);
+    const newRefreshToken = crypto.randomBytes(40).toString("hex");
+    const newRefreshTokenHash = hashToken(newRefreshToken);
+    const expiresAt = parseExpiry(env.JWT_REFRESH_EXPIRES_IN);
+
     await client.query(
       `INSERT INTO auth_sessions (user_id, refresh_token_hash, expires_at, user_agent, ip_address)
        VALUES ($1, $2, $3, $4, $5)`,
       [user.id, newRefreshTokenHash, expiresAt, userAgent, ipAddress]
     );
     await client.query("COMMIT");
+
+    return {
+      user: { id: user.id, email: user.email },
+      accessToken,
+      refreshToken: newRefreshToken,
+    };
   } catch (err) {
-    await client.query("ROLLBACK");
+    // Only rollback if we haven't already committed
+    try { await client.query("ROLLBACK"); } catch { /* already committed or rolled back */ }
     throw err;
   } finally {
     client.release();
   }
-
-  return {
-    user: { id: user.id, email: user.email },
-    accessToken,
-    refreshToken: newRefreshToken,
-  };
 }
 
 export async function logout(refreshToken: string): Promise<void> {

@@ -10,8 +10,13 @@ import type {
 export function listContacts(
   limit = 50,
   offset = 0,
+  search?: string,
 ): Promise<PaginatedResult<ContactListItemDTO>> {
-  return get(`/contacts?limit=${limit}&offset=${offset}`)
+  const query = new URLSearchParams()
+  query.set('limit', String(limit))
+  query.set('offset', String(offset))
+  if (search) query.set('search', search)
+  return get(`/contacts?${query.toString()}`)
 }
 
 export function getContact(id: number): Promise<ContactResponseDTO> {

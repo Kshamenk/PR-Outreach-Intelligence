@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useContactsStore } from '@/stores/contacts.store'
 import { useCampaignsStore } from '@/stores/campaigns.store'
@@ -7,6 +7,7 @@ import { useNotifications } from '@/composables/useNotifications'
 import * as aiApi from '@/api/ai.api'
 import * as messagingApi from '@/api/messaging.api'
 import type { GenerateOutreachResponseDTO, AISuggestionDTO } from '@pr-outreach/shared-types'
+import S from '@/components/ui/SkeletonBlock.vue'
 
 const route = useRoute()
 const contactsStore = useContactsStore()
@@ -28,6 +29,25 @@ const result = ref<GenerateOutreachResponseDTO | null>(null)
 const suggestionId = ref<number | null>(null)
 const editSubject = ref('')
 const editBody = ref('')
+
+// Track the context used for the current draft to prevent sending to the wrong contact
+const draftContactId = ref<number | null>(null)
+const draftCampaignId = ref<number | null>(null)
+const draftStatus = ref<string>('') // tracks the real suggestion status
+
+// Clear the draft when contact or campaign selection changes
+watch([selectedContactId, selectedCampaignId], () => {
+  if (result.value && (selectedContactId.value !== draftContactId.value || selectedCampaignId.value !== draftCampaignId.value)) {
+    result.value = null
+    suggestionId.value = null
+    editSubject.value = ''
+    editBody.value = ''
+    draftAccepted.value = false
+    draftStatus.value = ''
+    draftContactId.value = null
+    draftCampaignId.value = null
+  }
+})
 
 // ── History ──
 const history = ref<AISuggestionDTO[]>([])
@@ -80,6 +100,9 @@ async function generate() {
     suggestionId.value = res.suggestionId
     editSubject.value = res.subject
     editBody.value = res.body
+    draftContactId.value = selectedContactId.value
+    draftCampaignId.value = selectedCampaignId.value
+    draftStatus.value = 'draft'
     notify({ type: 'success', message: 'Draft generated successfully' })
     await loadHistory()
   } catch (err: any) {
@@ -95,6 +118,7 @@ async function acceptDraft() {
   try {
     await aiApi.acceptSuggestion(suggestionId.value)
     draftAccepted.value = true
+    draftStatus.value = 'accepted'
     notify({ type: 'success', message: 'Draft accepted — ready to send' })
     await loadHistory()
   } catch (err: any) {
@@ -107,6 +131,7 @@ async function rejectDraft() {
   try {
     await aiApi.rejectSuggestion(suggestionId.value)
     draftAccepted.value = false
+    draftStatus.value = 'rejected'
     notify({ type: 'info', message: 'Draft rejected' })
     await loadHistory()
   } catch (err: any) {
@@ -115,17 +140,18 @@ async function rejectDraft() {
 }
 
 async function sendEmail() {
-  if (!suggestionId.value || !selectedContactId.value) return
+  if (!suggestionId.value || !draftContactId.value) return
   sending.value = true
   try {
     await messagingApi.sendEmail({
-      contactId: selectedContactId.value,
-      campaignId: selectedCampaignId.value ?? undefined,
+      contactId: draftContactId.value,
+      campaignId: draftCampaignId.value ?? undefined,
       subject: editSubject.value,
       body: editBody.value,
       aiSuggestionId: suggestionId.value,
     })
     draftAccepted.value = false
+    draftStatus.value = 'sent'
     notify({ type: 'success', message: 'Email sent successfully!' })
     await loadHistory()
   } catch (err: any) {
@@ -139,7 +165,12 @@ function loadSuggestion(s: AISuggestionDTO) {
   suggestionId.value = s.id
   editSubject.value = s.subject
   editBody.value = s.body
+  draftStatus.value = s.status
   draftAccepted.value = s.status === 'accepted'
+  draftContactId.value = s.contactId
+  draftCampaignId.value = s.campaignId
+  selectedContactId.value = s.contactId
+  selectedCampaignId.value = s.campaignId
   result.value = {
     suggestionId: s.id,
     subject: s.subject,
@@ -148,6 +179,8 @@ function loadSuggestion(s: AISuggestionDTO) {
     promptVersion: s.promptVersion ?? '',
   }
 }
+
+const isActionable = () => draftStatus.value === 'draft' || draftStatus.value === 'accepted'
 
 const toneOptions: { value: typeof tone.value; label: string }[] = [
   { value: 'warm', label: 'Warm' },
@@ -166,23 +199,23 @@ const lengthOptions: { value: typeof length.value; label: string }[] = [
   <div class="space-y-6">
     <!-- Header -->
     <div>
-      <h1 class="text-2xl font-bold text-gray-900">AI Outreach Draft</h1>
-      <p class="mt-1 text-sm text-gray-600">Generate AI-assisted email drafts for your PR contacts.</p>
+      <h1 class="text-2xl font-bold text-[var(--color-text-primary)]">AI Outreach Draft</h1>
+      <p class="mt-1 text-sm text-[var(--color-text-secondary)]">Generate AI-assisted email drafts for your PR contacts.</p>
     </div>
 
     <div class="grid gap-6 lg:grid-cols-3">
       <!-- Left: Form -->
       <div class="space-y-6 lg:col-span-2">
         <!-- Configuration card -->
-        <div class="rounded-lg border border-gray-200 bg-white p-6 space-y-4">
-          <h2 class="text-lg font-semibold text-gray-900">Configure Draft</h2>
+        <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6 space-y-4">
+          <h2 class="text-lg font-semibold text-[var(--color-text-primary)]">Configure Draft</h2>
 
           <!-- Contact -->
           <div>
-            <label class="block text-sm font-medium text-gray-700">Contact</label>
+            <label class="block text-sm font-medium text-[var(--color-text-secondary)]">Contact</label>
             <select
               v-model="selectedContactId"
-              class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              class="mt-1 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] shadow-sm focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] focus:outline-none"
             >
               <option :value="null" disabled>Select a contact…</option>
               <option
@@ -197,10 +230,10 @@ const lengthOptions: { value: typeof length.value; label: string }[] = [
 
           <!-- Campaign -->
           <div>
-            <label class="block text-sm font-medium text-gray-700">Campaign</label>
+            <label class="block text-sm font-medium text-[var(--color-text-secondary)]">Campaign</label>
             <select
               v-model="selectedCampaignId"
-              class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              class="mt-1 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] shadow-sm focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] focus:outline-none"
             >
               <option :value="null" disabled>Select a campaign…</option>
               <option
@@ -215,7 +248,7 @@ const lengthOptions: { value: typeof length.value; label: string }[] = [
 
           <!-- Tone -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Tone</label>
+            <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">Tone</label>
             <div class="flex gap-2">
               <label
                 v-for="opt in toneOptions"
@@ -223,8 +256,8 @@ const lengthOptions: { value: typeof length.value; label: string }[] = [
                 :class="[
                   'cursor-pointer rounded-lg border px-4 py-2 text-sm font-medium transition-colors',
                   tone === opt.value
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-300 text-gray-600 hover:bg-gray-50',
+                    ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]'
+                    : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)]',
                 ]"
               >
                 <input v-model="tone" type="radio" :value="opt.value" class="sr-only" />
@@ -235,7 +268,7 @@ const lengthOptions: { value: typeof length.value; label: string }[] = [
 
           <!-- Length -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Length</label>
+            <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">Length</label>
             <div class="flex gap-2">
               <label
                 v-for="opt in lengthOptions"
@@ -243,8 +276,8 @@ const lengthOptions: { value: typeof length.value; label: string }[] = [
                 :class="[
                   'cursor-pointer rounded-lg border px-4 py-2 text-sm font-medium transition-colors',
                   length === opt.value
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-300 text-gray-600 hover:bg-gray-50',
+                    ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]'
+                    : 'border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)]',
                 ]"
               >
                 <input v-model="length" type="radio" :value="opt.value" class="sr-only" />
@@ -254,14 +287,14 @@ const lengthOptions: { value: typeof length.value; label: string }[] = [
           </div>
 
           <!-- Error -->
-          <div v-if="error" class="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+          <div v-if="error" class="rounded-lg bg-[var(--color-danger)]/10 p-3 text-sm text-[var(--color-danger)]">
             {{ error }}
           </div>
 
           <!-- Generate button -->
           <button
             :disabled="generating || !selectedContactId || !selectedCampaignId"
-            class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+            class="rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)] disabled:opacity-50"
             @click="generate"
           >
             {{ generating ? 'Generating…' : 'Generate Draft' }}
@@ -269,59 +302,63 @@ const lengthOptions: { value: typeof length.value; label: string }[] = [
         </div>
 
         <!-- Result card -->
-        <div v-if="result" class="rounded-lg border border-gray-200 bg-white p-6 space-y-4">
+        <div v-if="result" class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6 space-y-4">
           <div class="flex items-start justify-between">
-            <h2 class="text-lg font-semibold text-gray-900">Generated Draft</h2>
-            <span class="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+            <h2 class="text-lg font-semibold text-[var(--color-text-primary)]">Generated Draft</h2>
+            <span class="rounded-full bg-[var(--color-bg-secondary)] px-2.5 py-0.5 text-xs font-medium text-[var(--color-text-secondary)]">
               {{ result.model }} · {{ result.promptVersion }}
             </span>
           </div>
 
           <!-- Subject -->
           <div>
-            <label class="block text-sm font-medium text-gray-700">Subject</label>
+            <label class="block text-sm font-medium text-[var(--color-text-secondary)]">Subject</label>
             <input
               v-model="editSubject"
               type="text"
-              class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              class="mt-1 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] shadow-sm focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] focus:outline-none"
             />
           </div>
 
           <!-- Body -->
           <div>
-            <label class="block text-sm font-medium text-gray-700">Body</label>
+            <label class="block text-sm font-medium text-[var(--color-text-secondary)]">Body</label>
             <textarea
               v-model="editBody"
               rows="10"
-              class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              class="mt-1 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] shadow-sm focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] focus:outline-none"
             />
           </div>
 
           <!-- Actions -->
-          <div class="flex gap-3">
+          <div v-if="!isActionable()" class="rounded-lg bg-[var(--color-bg-secondary)] p-3 text-sm text-[var(--color-text-secondary)]">
+            This draft is <strong>{{ draftStatus }}</strong> and cannot be modified. Generate a new draft to continue.
+          </div>
+          <div v-else class="flex gap-3">
             <button
               v-if="draftAccepted"
               :disabled="sending"
-              class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+              class="rounded-lg bg-[var(--color-success)] px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
               @click="sendEmail"
             >
               {{ sending ? 'Sending…' : '📧 Send Email' }}
             </button>
             <button
               v-if="!draftAccepted"
-              class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+              class="rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
               @click="acceptDraft"
             >
               Accept Draft
             </button>
             <button
-              class="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
+              v-if="draftStatus === 'draft' || draftStatus === 'accepted'"
+              class="rounded-lg border border-[var(--color-danger)] px-4 py-2 text-sm font-medium text-[var(--color-danger)] transition-colors hover:bg-[var(--color-bg-secondary)]"
               @click="rejectDraft"
             >
               Reject
             </button>
             <button
-              class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              class="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-secondary)]"
               @click="generate"
               :disabled="generating"
             >
@@ -333,21 +370,29 @@ const lengthOptions: { value: typeof length.value; label: string }[] = [
 
       <!-- Right: History -->
       <div class="space-y-4">
-        <div class="rounded-lg border border-gray-200 bg-white p-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-4">Recent Suggestions</h2>
+        <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+          <h2 class="text-lg font-semibold text-[var(--color-text-primary)] mb-4">Recent Suggestions</h2>
 
-          <div v-if="historyLoading" class="text-center text-sm text-gray-500">Loading…</div>
-          <div v-else-if="history.length === 0" class="text-center text-sm text-gray-500">
+          <div v-if="historyLoading" class="skeleton-delay space-y-3">
+            <div v-for="i in 4" :key="i" class="rounded-lg border border-[var(--color-border)] p-3">
+              <S class="h-4 w-full max-w-[12rem]" />
+              <div class="mt-2 flex items-center gap-2">
+                <S class="h-4 w-14 rounded-full" />
+                <S class="h-3 w-16" />
+              </div>
+            </div>
+          </div>
+          <div v-else-if="history.length === 0" class="text-center text-sm text-[var(--color-text-secondary)]">
             No suggestions yet.
           </div>
           <ul v-else class="space-y-3">
             <li
               v-for="s in history"
               :key="s.id"
-              class="cursor-pointer rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50"
+              class="cursor-pointer rounded-lg border border-[var(--color-border)] p-3 transition-colors hover:bg-[var(--color-bg-secondary)]"
               @click="loadSuggestion(s)"
             >
-              <p class="text-sm font-medium text-gray-900 truncate">{{ s.subject }}</p>
+              <p class="text-sm font-medium text-[var(--color-text-primary)] truncate">{{ s.subject }}</p>
               <div class="mt-1 flex items-center gap-2">
                 <span
                   :class="[
@@ -363,7 +408,7 @@ const lengthOptions: { value: typeof length.value; label: string }[] = [
                 >
                   {{ s.status }}
                 </span>
-                <span class="text-xs text-gray-500">
+                <span class="text-xs text-[var(--color-text-secondary)]">
                   {{ new Date(s.createdAt).toLocaleDateString() }}
                 </span>
               </div>

@@ -7,6 +7,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import InteractionTimeline from '@/components/interactions/InteractionTimeline.vue'
 import InteractionForm from '@/components/interactions/InteractionForm.vue'
 import { formatDate } from '@/utils/date'
+import ContactDetailSkeleton from '@/components/ui/skeletons/ContactDetailSkeleton.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -43,35 +44,35 @@ onUnmounted(() => store.clearCurrent())
   <div>
     <!-- Back link -->
     <button
-      class="mb-4 text-sm text-gray-500 transition-colors hover:text-gray-700"
+      class="mb-4 text-sm text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
       @click="router.push({ name: 'contacts' })"
     >
       ← Back to Contacts
     </button>
 
     <!-- Loading -->
-    <div v-if="store.loading" class="text-center text-gray-500">Loading…</div>
+    <ContactDetailSkeleton v-if="store.loading" />
 
     <!-- Error -->
-    <div v-else-if="store.error" class="rounded-lg bg-red-50 p-4 text-sm text-red-700">{{ store.error }}</div>
+    <div v-else-if="store.error" class="rounded-lg bg-[var(--color-danger)]/10 p-4 text-sm text-[var(--color-danger)]">{{ store.error }}</div>
 
     <!-- Content -->
     <template v-else-if="store.current">
       <!-- Header -->
       <div class="flex items-start justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">{{ store.current.name }}</h1>
-          <p class="mt-1 text-gray-600">{{ store.current.outlet }}</p>
+          <h1 class="text-2xl font-bold text-[var(--color-text-primary)]">{{ store.current.name }}</h1>
+          <p class="mt-1 text-[var(--color-text-secondary)]">{{ store.current.outlet }}</p>
         </div>
         <div class="flex gap-2">
           <button
-            class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            class="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-secondary)]"
             @click="showEdit = true"
           >
             Edit
           </button>
           <button
-            class="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
+            class="rounded-lg border border-[var(--color-danger)] px-4 py-2 text-sm font-medium text-[var(--color-danger)] transition-colors hover:bg-[var(--color-bg-secondary)]"
             @click="showArchive = true"
           >
             Archive
@@ -80,32 +81,32 @@ onUnmounted(() => store.clearCurrent())
       </div>
 
       <!-- Info grid -->
-      <div class="mt-6 grid grid-cols-2 gap-6 rounded-lg border border-gray-200 bg-white p-6 md:grid-cols-4">
+      <div class="mt-6 grid grid-cols-2 gap-6 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6 md:grid-cols-4">
         <div>
-          <p class="text-xs font-medium uppercase text-gray-500">Email</p>
-          <p class="mt-1 text-sm text-gray-900">{{ store.current.email }}</p>
+          <p class="text-xs font-medium uppercase text-[var(--color-text-secondary)]">Email</p>
+          <p class="mt-1 text-sm text-[var(--color-text-primary)]">{{ store.current.email }}</p>
         </div>
         <div>
-          <p class="text-xs font-medium uppercase text-gray-500">Score</p>
+          <p class="text-xs font-medium uppercase text-[var(--color-text-secondary)]">Score</p>
           <span :class="['mt-1 inline-block rounded-full px-2.5 py-1 text-sm font-semibold ring-1 ring-inset', scoreColor(store.current.score)]">
             {{ store.current.score }}
           </span>
         </div>
         <div>
-          <p class="text-xs font-medium uppercase text-gray-500">Last Contacted</p>
-          <p class="mt-1 text-sm text-gray-900">
+          <p class="text-xs font-medium uppercase text-[var(--color-text-secondary)]">Last Contacted</p>
+          <p class="mt-1 text-sm text-[var(--color-text-primary)]">
             {{ store.current.lastContactedAt ? formatDate(store.current.lastContactedAt) : '—' }}
           </p>
         </div>
         <div>
-          <p class="text-xs font-medium uppercase text-gray-500">Created</p>
-          <p class="mt-1 text-sm text-gray-900">{{ formatDate(store.current.createdAt) }}</p>
+          <p class="text-xs font-medium uppercase text-[var(--color-text-secondary)]">Created</p>
+          <p class="mt-1 text-sm text-[var(--color-text-primary)]">{{ formatDate(store.current.createdAt) }}</p>
         </div>
       </div>
 
       <!-- Topics -->
       <div v-if="store.current.topics.length" class="mt-4">
-        <p class="text-xs font-medium uppercase text-gray-500">Topics</p>
+        <p class="text-xs font-medium uppercase text-[var(--color-text-secondary)]">Topics</p>
         <div class="mt-2 flex flex-wrap gap-2">
           <span
             v-for="topic in store.current.topics"
@@ -120,9 +121,9 @@ onUnmounted(() => store.clearCurrent())
       <!-- Interactions -->
       <div class="mt-8">
         <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-gray-900">Interactions</h2>
+          <h2 class="text-lg font-semibold text-[var(--color-text-primary)]">Interactions</h2>
           <button
-            class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+            class="rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
             @click="showInteractionForm = true"
           >
             + Log Interaction
