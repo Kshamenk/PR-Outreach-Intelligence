@@ -17,9 +17,9 @@ function isActive(path: string): boolean {
 </script>
 
 <template>
-  <aside class="flex w-64 flex-col border-r border-gray-200 bg-white">
-    <div class="flex h-16 items-center gap-2 border-b border-gray-200 px-6">
-      <span class="text-xl font-bold text-gray-900">PR Outreach</span>
+  <aside class="flex w-64 flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)]">
+    <div class="flex h-16 items-center gap-2 border-b border-[var(--color-border)] px-6">
+      <span class="text-xl font-bold text-[var(--color-text-primary)]">PR Outreach</span>
     </div>
 
     <nav class="flex-1 space-y-1 px-3 py-4">
@@ -30,8 +30,8 @@ function isActive(path: string): boolean {
         class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
         :class="
           isActive(item.to)
-            ? 'bg-gray-100 text-gray-900'
-            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            ? 'bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)]'
+            : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)]'
         "
       >
         <span>{{ item.icon }}</span>

@@ -26,22 +26,22 @@ function next() {
 </script>
 
 <template>
-  <div class="flex items-center justify-between border-t border-gray-200 pt-4">
-    <p class="text-sm text-gray-600">
+  <div class="flex items-center justify-between border-t border-[var(--color-border)] pt-4">
+    <p class="text-sm text-[var(--color-text-secondary)]">
       Showing <span class="font-medium">{{ from }}</span>–<span class="font-medium">{{ to }}</span>
       of <span class="font-medium">{{ total }}</span>
     </p>
     <div class="flex gap-2">
       <button
         :disabled="!hasPrev"
-        class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+        class="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
         @click="prev"
       >
         Previous
       </button>
       <button
         :disabled="!hasNext"
-        class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+        class="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
         @click="next"
       >
         Next

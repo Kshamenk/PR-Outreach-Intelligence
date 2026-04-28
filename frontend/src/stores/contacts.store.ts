@@ -18,11 +18,18 @@ export const useContactsStore = defineStore('contacts', () => {
   const error = ref('')
   const { notify } = useNotifications()
 
-  async function fetchList(limit = 50, offset = 0): Promise<void> {
+  const currentOffset = ref(0)
+  const currentLimit = ref(50)
+  const currentSearch = ref('')
+
+  async function fetchList(limit = 50, offset = 0, search?: string): Promise<void> {
     loading.value = true
     error.value = ''
+    currentLimit.value = limit
+    currentOffset.value = offset
+    if (search !== undefined) currentSearch.value = search
     try {
-      const res: PaginatedResult<ContactListItemDTO> = await contactsApi.listContacts(limit, offset)
+      const res: PaginatedResult<ContactListItemDTO> = await contactsApi.listContacts(limit, offset, currentSearch.value || undefined)
       items.value = res.data
       total.value = res.total
     } catch (err: any) {
@@ -47,7 +54,7 @@ export const useContactsStore = defineStore('contacts', () => {
   async function create(dto: CreateContactDTO): Promise<ContactResponseDTO> {
     const result = await contactsApi.createContact(dto)
     notify({ type: 'success', message: 'Contact created' })
-    await fetchList()
+    await fetchList(currentLimit.value, currentOffset.value)
     return result
   }
 
@@ -55,7 +62,7 @@ export const useContactsStore = defineStore('contacts', () => {
     const result = await contactsApi.updateContact(id, dto)
     if (current.value?.id === id) current.value = result
     notify({ type: 'success', message: 'Contact updated' })
-    await fetchList()
+    await fetchList(currentLimit.value, currentOffset.value)
     return result
   }
 
@@ -63,7 +70,7 @@ export const useContactsStore = defineStore('contacts', () => {
     await contactsApi.deleteContact(id)
     if (current.value?.id === id) current.value = null
     notify({ type: 'success', message: 'Contact archived' })
-    await fetchList()
+    await fetchList(currentLimit.value, currentOffset.value)
   }
 
   function clearCurrent(): void {

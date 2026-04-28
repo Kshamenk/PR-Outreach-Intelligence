@@ -133,6 +133,13 @@ export async function updateContactLastContacted(
   );
 }
 
+const CAMPAIGN_CONTACT_STATUS_ORDER: Record<string, number> = {
+  pending: 0,
+  contacted: 1,
+  replied: 2,
+  opted_out: 3,
+};
+
 export async function updateCampaignContactStatus(
   campaignId: number,
   contactId: number,
@@ -140,10 +147,27 @@ export async function updateCampaignContactStatus(
   client?: PoolClient
 ): Promise<void> {
   const q = client ?? pool;
-  await q.query(
-    `UPDATE campaign_contacts
-     SET status = $1, last_outreach_at = NOW()
-     WHERE campaign_id = $2 AND contact_id = $3`,
-    [status, campaignId, contactId]
-  );
+  const statusRank = CAMPAIGN_CONTACT_STATUS_ORDER[status] ?? 0;
+  // Only advance status forward — never downgrade from a higher-value state
+  const lowerStatuses = Object.entries(CAMPAIGN_CONTACT_STATUS_ORDER)
+    .filter(([, rank]) => rank < statusRank)
+    .map(([s]) => s);
+
+  if (lowerStatuses.length === 0) {
+    // Target is the lowest rank; update unconditionally
+    await q.query(
+      `UPDATE campaign_contacts
+       SET status = $1, last_outreach_at = NOW()
+       WHERE campaign_id = $2 AND contact_id = $3`,
+      [status, campaignId, contactId]
+    );
+  } else {
+    const placeholders = lowerStatuses.map((_, i) => `$${i + 4}`).join(", ");
+    await q.query(
+      `UPDATE campaign_contacts
+       SET status = $1, last_outreach_at = NOW()
+       WHERE campaign_id = $2 AND contact_id = $3 AND status IN (${placeholders})`,
+      [status, campaignId, contactId, ...lowerStatuses]
+    );
+  }
 }
