@@ -12,11 +12,16 @@ function applyTheme(theme: Theme) {
   document.documentElement.classList.toggle('dark', isDark)
 }
 
+let initialized = false
+
 function initTheme() {
   applyTheme(current.value)
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (current.value === 'system') applyTheme('system')
-  })
+  if (!initialized) {
+    initialized = true
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (current.value === 'system') applyTheme('system')
+    })
+  }
 }
 
 watch(current, (theme) => {

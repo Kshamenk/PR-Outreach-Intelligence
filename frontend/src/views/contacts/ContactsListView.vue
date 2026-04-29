@@ -38,7 +38,7 @@ function goToDetail(id: number) {
 
 function onPageChange(newOffset: number) {
   offset.value = newOffset
-  store.fetchList(limit, newOffset)
+  store.fetchList(limit, newOffset, search.value)
 }
 
 onMounted(() => store.fetchList(limit, 0))

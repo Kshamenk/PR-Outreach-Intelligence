@@ -13,7 +13,7 @@ afterAll(() => pool.end());
 beforeEach(() => cleanDatabase());
 
 describe("Auth API", () => {
-  const validUser = { email: "test@api.com", password: "securepassword123" };
+  const validUser = { email: "test@api.com", password: "SecurePass123" };
 
   describe("POST /api/auth/register", () => {
     it("should register a new user and return tokens (201)", async () => {

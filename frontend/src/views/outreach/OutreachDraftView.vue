@@ -34,6 +34,7 @@ const editBody = ref('')
 const draftContactId = ref<number | null>(null)
 const draftCampaignId = ref<number | null>(null)
 const draftStatus = ref<string>('') // tracks the real suggestion status
+let generateGeneration = 0 // guards against stale generate() responses
 
 // Clear the draft when contact or campaign selection changes
 watch([selectedContactId, selectedCampaignId], () => {
@@ -88,7 +89,8 @@ async function generate() {
   generating.value = true
   error.value = ''
   result.value = null
-    draftAccepted.value = false
+  draftAccepted.value = false
+  const currentGen = ++generateGeneration
   try {
     const res = await aiApi.generateOutreach({
       contactId: selectedContactId.value,
@@ -96,6 +98,7 @@ async function generate() {
       tone: tone.value,
       length: length.value,
     })
+    if (currentGen !== generateGeneration) return // stale response — discard
     result.value = res
     suggestionId.value = res.suggestionId
     editSubject.value = res.subject

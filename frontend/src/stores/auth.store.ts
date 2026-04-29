@@ -13,15 +13,19 @@ export const useAuthStore = defineStore('auth', () => {
   async function register(dto: RegisterDTO): Promise<void> {
     const res = await authApi.register(dto)
     setTokens(res.accessToken, res.refreshToken)
-    user.value = { id: res.user.id, email: res.user.email, createdAt: '' }
     await fetchMe()
+    if (!user.value) {
+      throw new Error('Registration succeeded but failed to load profile')
+    }
   }
 
   async function login(dto: LoginDTO): Promise<void> {
     const res = await authApi.login(dto)
     setTokens(res.accessToken, res.refreshToken)
-    user.value = { id: res.user.id, email: res.user.email, createdAt: '' }
     await fetchMe()
+    if (!user.value) {
+      throw new Error('Login succeeded but failed to load profile')
+    }
   }
 
   async function fetchMe(): Promise<void> {
