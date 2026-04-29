@@ -32,12 +32,18 @@ const activityIcons: Record<string, string> = {
 
 onMounted(async () => {
   try {
-    const [s, a] = await Promise.all([
+    const [statsResult, activityResult] = await Promise.allSettled([
       dashboardApi.getStats(),
       dashboardApi.getRecentActivity(),
     ])
-    stats.value = s
-    activity.value = a
+    if (statsResult.status === 'fulfilled') {
+      stats.value = statsResult.value
+    } else {
+      error.value = 'Failed to load stats'
+    }
+    if (activityResult.status === 'fulfilled') {
+      activity.value = activityResult.value
+    }
   } catch (err: any) {
     error.value = err.message ?? 'Failed to load dashboard'
   } finally {

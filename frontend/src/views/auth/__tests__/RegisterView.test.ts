@@ -62,8 +62,8 @@ describe('RegisterView', () => {
     const { wrapper } = mountRegister()
     await wrapper.find('input[type="email"]').setValue('a@b.com')
     const pws = wrapper.findAll('input[type="password"]')
-    await pws[0].setValue('password1')
-    await pws[1].setValue('password2')
+    await pws[0].setValue('Password1')
+    await pws[1].setValue('Password2')
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
@@ -92,14 +92,14 @@ describe('RegisterView', () => {
 
     await wrapper.find('input[type="email"]').setValue('new@user.com')
     const pws = wrapper.findAll('input[type="password"]')
-    await pws[0].setValue('securepass')
-    await pws[1].setValue('securepass')
+    await pws[0].setValue('Secure1pass')
+    await pws[1].setValue('Secure1pass')
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
     expect(registerMock).toHaveBeenCalledWith({
       email: 'new@user.com',
-      password: 'securepass',
+      password: 'Secure1pass',
     })
     expect(router.currentRoute.value.path).toBe('/')
   })
@@ -111,8 +111,8 @@ describe('RegisterView', () => {
 
     await wrapper.find('input[type="email"]').setValue('dup@user.com')
     const pws = wrapper.findAll('input[type="password"]')
-    await pws[0].setValue('password123')
-    await pws[1].setValue('password123')
+    await pws[0].setValue('Password1')
+    await pws[1].setValue('Password1')
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 

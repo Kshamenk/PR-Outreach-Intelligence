@@ -10,7 +10,7 @@ describe("registerSchema", () => {
   it("should accept valid registration data", () => {
     const result = registerSchema.safeParse({
       email: "user@example.com",
-      password: "securepass123",
+      password: "Secure1pass",
     });
     expect(result.success).toBe(true);
   });
@@ -50,9 +50,33 @@ describe("registerSchema", () => {
   it("should accept password exactly 8 characters", () => {
     const result = registerSchema.safeParse({
       email: "user@example.com",
-      password: "12345678",
+      password: "Abcdefg1",
     });
     expect(result.success).toBe(true);
+  });
+
+  it("should reject password without uppercase letter", () => {
+    const result = registerSchema.safeParse({
+      email: "user@example.com",
+      password: "securepass1",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject password without lowercase letter", () => {
+    const result = registerSchema.safeParse({
+      email: "user@example.com",
+      password: "SECUREPASS1",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject password without digit", () => {
+    const result = registerSchema.safeParse({
+      email: "user@example.com",
+      password: "SecurePass",
+    });
+    expect(result.success).toBe(false);
   });
 
   it("should reject missing fields", () => {
