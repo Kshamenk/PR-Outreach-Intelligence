@@ -56,8 +56,9 @@ export async function findAllByUser(
   const params: unknown[] = [userId];
   let searchClause = "";
   if (search && search.trim()) {
-    params.push(`%${search.trim()}%`);
-    searchClause = ` AND (c.name ILIKE $${params.length} OR c.outlet ILIKE $${params.length})`;
+    const escaped = search.trim().replace(/[\\%_]/g, '\\$&');
+    params.push(`%${escaped}%`);
+    searchClause = ` AND (c.name ILIKE $${params.length} ESCAPE '\\' OR c.outlet ILIKE $${params.length} ESCAPE '\\')`;
   }
 
   const countResult = await pool.query<{ count: string }>(

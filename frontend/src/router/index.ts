@@ -64,8 +64,11 @@ router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
   if (!initialized) {
-    initialized = true
-    await auth.tryRestore()
+    try {
+      await auth.tryRestore()
+    } finally {
+      initialized = true
+    }
   }
 
   const isGuest = to.meta.guest === true

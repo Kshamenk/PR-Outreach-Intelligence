@@ -36,14 +36,6 @@ export async function findUserById(id: number): Promise<UserRow | null> {
   return rows[0] ?? null;
 }
 
-export async function createUser(email: string, passwordHash: string): Promise<UserRow> {
-  const { rows } = await pool.query<UserRow>(
-    "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING *",
-    [email, passwordHash]
-  );
-  return rows[0];
-}
-
 export async function createUserWithSession(
   email: string,
   passwordHash: string,

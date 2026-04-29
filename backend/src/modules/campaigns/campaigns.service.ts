@@ -11,6 +11,13 @@ import type {
   CampaignParticipantDTO,
 } from "./dto/campaigns.dto";
 
+const VALID_STATUS_TRANSITIONS: Record<string, string[]> = {
+  draft: ["active"],
+  active: ["paused", "completed"],
+  paused: ["active", "completed"],
+  completed: [],
+};
+
 function toResponseDTO(row: campaignsRepo.CampaignRow): CampaignResponseDTO {
   return {
     id: row.id,
@@ -70,6 +77,15 @@ export async function updateCampaign(
   if (!existing) throw new NotFoundError("Campaign not found");
   if (existing.archived_at) {
     throw new BadRequestError("Cannot update an archived campaign. Restore it first.");
+  }
+
+  if (dto.status && dto.status !== existing.status) {
+    const allowed = VALID_STATUS_TRANSITIONS[existing.status] ?? [];
+    if (!allowed.includes(dto.status)) {
+      throw new BadRequestError(
+        `Cannot transition campaign from '${existing.status}' to '${dto.status}'`
+      );
+    }
   }
 
   const row = await campaignsRepo.update(userId, campaignId, dto);
