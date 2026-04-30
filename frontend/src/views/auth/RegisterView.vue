@@ -61,7 +61,7 @@ async function handleSubmit(): Promise<void> {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-[var(--color-bg-primary)] px-4">
+  <div class="flex min-h-screen items-center justify-center px-4" style="background: var(--color-auth-gradient)">
     <div class="w-full max-w-md">
       <!-- Brand header -->
       <div class="mb-8 text-center">
