@@ -55,7 +55,7 @@ onMounted(async () => {
 <template>
   <div class="space-y-6">
     <!-- Header -->
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 class="text-2xl font-bold text-[var(--color-text-primary)]">Dashboard</h1>
         <p class="mt-1 text-sm text-[var(--color-text-secondary)]">Your PR Outreach Intelligence overview.</p>
@@ -93,9 +93,9 @@ onMounted(async () => {
       </div>
 
       <!-- Quick actions + Recent activity -->
-      <div class="grid gap-6 lg:grid-cols-3">
+      <div class="grid min-w-0 gap-6 lg:grid-cols-3">
         <!-- Quick actions -->
-        <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+        <div class="overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
           <h2 class="text-lg font-semibold text-[var(--color-text-primary)] mb-4">Quick Actions</h2>
           <div class="space-y-2">
             <button
@@ -123,7 +123,7 @@ onMounted(async () => {
         </div>
 
         <!-- Recent activity -->
-        <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6 lg:col-span-2">
+        <div class="overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6 lg:col-span-2">
           <h2 class="text-lg font-semibold text-[var(--color-text-primary)] mb-4">Recent Activity</h2>
 
           <div v-if="activity.length === 0" class="text-center text-sm text-[var(--color-text-secondary)] py-8">
@@ -138,8 +138,8 @@ onMounted(async () => {
             >
               <span class="mt-0.5 text-base">{{ activityIcons[item.type] ?? '📌' }}</span>
               <div class="min-w-0 flex-1">
-                <p class="text-sm font-medium text-[var(--color-text-primary)]">{{ item.title }}</p>
-                <p v-if="item.description" class="text-xs text-[var(--color-text-secondary)] truncate">{{ item.description }}</p>
+                <p class="truncate text-sm font-medium text-[var(--color-text-primary)]">{{ item.title }}</p>
+                <p v-if="item.description" class="truncate text-xs text-[var(--color-text-secondary)]">{{ item.description }}</p>
               </div>
               <span class="shrink-0 text-xs text-[var(--color-text-secondary)]" :title="formatDate(item.createdAt)">{{ formatRelativeDate(item.createdAt) }}</span>
             </li>

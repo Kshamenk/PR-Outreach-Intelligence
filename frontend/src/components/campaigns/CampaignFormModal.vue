@@ -83,10 +83,10 @@ async function handleSubmit() {
 <template>
   <dialog
     ref="dialogRef"
-    class="rounded-2xl bg-[var(--color-surface)] p-0 shadow-2xl backdrop:bg-black/50 backdrop:backdrop-blur-sm"
+    class="mx-4 w-full max-w-[30rem] rounded-2xl bg-[var(--color-surface)] p-0 shadow-2xl backdrop:bg-black/50 backdrop:backdrop-blur-sm"
     @cancel.prevent="emit('close')"
   >
-    <form class="w-[30rem]" @submit.prevent="handleSubmit">
+    <form class="max-h-[85vh] overflow-y-auto" @submit.prevent="handleSubmit">
       <div class="flex items-center justify-between border-b border-[var(--color-border)] px-6 pt-6 pb-4">
         <h3 class="text-lg font-semibold text-[var(--color-text-primary)]">{{ title }}</h3>
         <button type="button" class="rounded-lg p-1 text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)]" @click="emit('close')">
