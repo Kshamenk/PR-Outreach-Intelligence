@@ -39,10 +39,10 @@ function onConfirm() {
 <template>
   <dialog
     ref="dialogRef"
-    class="rounded-2xl bg-[var(--color-surface)] p-0 shadow-2xl backdrop:bg-black/50 backdrop:backdrop-blur-sm"
+    class="mx-4 w-full max-w-[26rem] rounded-2xl bg-[var(--color-surface)] p-0 shadow-2xl backdrop:bg-black/50 backdrop:backdrop-blur-sm"
     @cancel.prevent="onCancel"
   >
-    <div class="w-[26rem]">
+    <div>
       <div class="flex items-center justify-between border-b border-[var(--color-border)] px-6 pt-6 pb-4">
         <h3 class="text-lg font-semibold text-[var(--color-text-primary)]">{{ title }}</h3>
         <button

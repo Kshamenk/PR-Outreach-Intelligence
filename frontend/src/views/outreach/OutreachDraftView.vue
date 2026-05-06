@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useContactsStore } from '@/stores/contacts.store'
 import { useCampaignsStore } from '@/stores/campaigns.store'
@@ -8,6 +8,8 @@ import * as aiApi from '@/api/ai.api'
 import * as messagingApi from '@/api/messaging.api'
 import type { GenerateOutreachResponseDTO, AISuggestionDTO } from '@pr-outreach/shared-types'
 import S from '@/components/ui/SkeletonBlock.vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
+import type { SelectOption } from '@/components/ui/AppSelect.vue'
 
 const route = useRoute()
 const contactsStore = useContactsStore()
@@ -26,6 +28,7 @@ const sending = ref(false)
 const draftAccepted = ref(false)
 const error = ref('')
 const result = ref<GenerateOutreachResponseDTO | null>(null)
+const resultCardRef = ref<HTMLElement | null>(null)
 const suggestionId = ref<number | null>(null)
 const editSubject = ref('')
 const editBody = ref('')
@@ -53,6 +56,16 @@ watch([selectedContactId, selectedCampaignId], () => {
 // ── History ──
 const history = ref<AISuggestionDTO[]>([])
 const historyLoading = ref(false)
+
+// ── Select options (for AppSelect) ──
+const contactOptions = computed<SelectOption[]>(() => [
+  { value: null, label: 'Select a contact…', disabled: true },
+  ...contactsStore.items.map((c) => ({ value: c.id, label: `${c.name} — ${c.outlet}` })),
+])
+const campaignOptions = computed<SelectOption[]>(() => [
+  { value: null, label: 'Select a campaign…', disabled: true },
+  ...campaignsStore.items.map((c) => ({ value: c.id, label: c.name })),
+])
 
 onMounted(async () => {
   // Pre-fill from query params
@@ -181,6 +194,12 @@ function loadSuggestion(s: AISuggestionDTO) {
     model: s.model ?? '',
     promptVersion: s.promptVersion ?? '',
   }
+  // On mobile, scroll to the result card
+  if (window.innerWidth < 768) {
+    nextTick(() => {
+      resultCardRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
 }
 
 const isActionable = () => draftStatus.value === 'draft' || draftStatus.value === 'accepted'
@@ -206,53 +225,39 @@ const lengthOptions: { value: typeof length.value; label: string }[] = [
       <p class="mt-1 text-sm text-[var(--color-text-secondary)]">Generate AI-assisted email drafts for your PR contacts.</p>
     </div>
 
-    <div class="grid gap-6 lg:grid-cols-3">
+    <div class="grid min-w-0 gap-6 lg:grid-cols-3">
       <!-- Left: Form -->
-      <div class="space-y-6 lg:col-span-2">
+      <div class="min-w-0 space-y-6 lg:col-span-2">
         <!-- Configuration card -->
-        <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6 space-y-4">
+        <div class="overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6 space-y-4">
           <h2 class="text-lg font-semibold text-[var(--color-text-primary)]">Configure Draft</h2>
 
           <!-- Contact -->
           <div>
             <label class="block text-sm font-medium text-[var(--color-text-secondary)]">Contact</label>
-            <select
-              v-model="selectedContactId"
-              class="mt-1 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] shadow-sm focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] focus:outline-none"
-            >
-              <option :value="null" disabled>Select a contact…</option>
-              <option
-                v-for="c in contactsStore.items"
-                :key="c.id"
-                :value="c.id"
-              >
-                {{ c.name }} — {{ c.outlet }}
-              </option>
-            </select>
+            <AppSelect
+              :model-value="selectedContactId"
+              :options="contactOptions"
+              placeholder="Select a contact…"
+              @update:model-value="selectedContactId = $event as number | null"
+            />
           </div>
 
           <!-- Campaign -->
           <div>
             <label class="block text-sm font-medium text-[var(--color-text-secondary)]">Campaign</label>
-            <select
-              v-model="selectedCampaignId"
-              class="mt-1 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] shadow-sm focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] focus:outline-none"
-            >
-              <option :value="null" disabled>Select a campaign…</option>
-              <option
-                v-for="c in campaignsStore.items"
-                :key="c.id"
-                :value="c.id"
-              >
-                {{ c.name }}
-              </option>
-            </select>
+            <AppSelect
+              :model-value="selectedCampaignId"
+              :options="campaignOptions"
+              placeholder="Select a campaign…"
+              @update:model-value="selectedCampaignId = $event as number | null"
+            />
           </div>
 
           <!-- Tone -->
           <div>
             <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">Tone</label>
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
               <label
                 v-for="opt in toneOptions"
                 :key="opt.value"
@@ -272,7 +277,7 @@ const lengthOptions: { value: typeof length.value; label: string }[] = [
           <!-- Length -->
           <div>
             <label class="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">Length</label>
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
               <label
                 v-for="opt in lengthOptions"
                 :key="opt.value"
@@ -305,7 +310,7 @@ const lengthOptions: { value: typeof length.value; label: string }[] = [
         </div>
 
         <!-- Result card -->
-        <div v-if="result" class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6 space-y-4">
+        <div v-if="result" ref="resultCardRef" class="overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6 space-y-4">
           <div class="flex items-start justify-between">
             <h2 class="text-lg font-semibold text-[var(--color-text-primary)]">Generated Draft</h2>
             <span class="rounded-full bg-[var(--color-bg-secondary)] px-2.5 py-0.5 text-xs font-medium text-[var(--color-text-secondary)]">
@@ -337,7 +342,7 @@ const lengthOptions: { value: typeof length.value; label: string }[] = [
           <div v-if="!isActionable()" class="rounded-lg bg-[var(--color-bg-secondary)] p-3 text-sm text-[var(--color-text-secondary)]">
             This draft is <strong>{{ draftStatus }}</strong> and cannot be modified. Generate a new draft to continue.
           </div>
-          <div v-else class="flex gap-3">
+          <div v-else class="flex flex-wrap gap-3">
             <button
               v-if="draftAccepted"
               :disabled="sending"
@@ -372,8 +377,8 @@ const lengthOptions: { value: typeof length.value; label: string }[] = [
       </div>
 
       <!-- Right: History -->
-      <div class="space-y-4">
-        <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+      <div class="min-w-0 space-y-4">
+        <div class="overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
           <h2 class="text-lg font-semibold text-[var(--color-text-primary)] mb-4">Recent Suggestions</h2>
 
           <div v-if="historyLoading" class="skeleton-delay space-y-3">

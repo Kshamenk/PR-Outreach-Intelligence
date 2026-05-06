@@ -81,7 +81,7 @@ onMounted(() => store.fetchList(limit, 0))
     />
 
     <!-- Table -->
-    <div v-else class="mt-4 overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
+    <div v-else class="mt-4 overflow-x-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
       <table class="min-w-full divide-y divide-[var(--color-border)]">
         <thead class="bg-[var(--color-bg-secondary)]">
           <tr>
