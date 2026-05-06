@@ -94,8 +94,8 @@ onUnmounted(() => campaignsStore.clearCurrent())
 
     <template v-else-if="campaignsStore.current">
       <!-- Header -->
-      <div class="flex items-start justify-between">
-        <div class="flex items-center gap-3">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div class="flex flex-wrap items-center gap-3">
           <h1 class="text-2xl font-bold text-[var(--color-text-primary)]">{{ campaignsStore.current.name }}</h1>
           <StatusBadge :label="campaignsStore.current.status" :variant="campaignsStore.current.status" />
         </div>
@@ -156,7 +156,7 @@ onUnmounted(() => campaignsStore.clearCurrent())
           No contacts added to this campaign yet.
         </div>
 
-        <div v-else class="mt-4 overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
+        <div v-else class="mt-4 overflow-x-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
           <table class="min-w-full divide-y divide-[var(--color-border)]">
             <thead class="bg-[var(--color-bg-secondary)]">
               <tr>
@@ -237,10 +237,10 @@ onUnmounted(() => campaignsStore.clearCurrent())
     <!-- Add Contacts Modal -->
     <dialog
       ref="addContactsDialogRef"
-      class="rounded-xl bg-[var(--color-surface)] p-0 shadow-xl backdrop:bg-black/40"
+      class="mx-4 w-full max-w-[28rem] rounded-xl bg-[var(--color-surface)] p-0 shadow-xl backdrop:bg-black/40"
       @cancel.prevent="showAddContacts = false"
     >
-      <div v-if="showAddContacts" class="w-[28rem] p-6">
+      <div v-if="showAddContacts" class="max-h-[85vh] overflow-y-auto p-6">
         <h3 class="text-lg font-semibold text-[var(--color-text-primary)]">Add Contacts to Campaign</h3>
         <div v-if="contactsStore.items.length === 0" class="mt-4 text-sm text-[var(--color-text-secondary)]">
           No contacts available. Create contacts first.

@@ -59,7 +59,7 @@ onUnmounted(() => store.clearCurrent())
     <!-- Content -->
     <template v-else-if="store.current">
       <!-- Header -->
-      <div class="flex items-start justify-between">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 class="text-2xl font-bold text-[var(--color-text-primary)]">{{ store.current.name }}</h1>
           <p class="mt-1 text-[var(--color-text-secondary)]">{{ store.current.outlet }}</p>
