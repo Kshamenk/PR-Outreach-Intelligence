@@ -4,6 +4,10 @@ import { useAuthStore } from '@/stores/auth.store'
 import { useRouter } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'
 
+const emit = defineEmits<{
+  'toggle-sidebar': []
+}>()
+
 const auth = useAuthStore()
 const router = useRouter()
 const open = ref(false)
@@ -42,8 +46,17 @@ const initials = (email: string | undefined) => {
 </script>
 
 <template>
-  <header class="flex h-16 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-6">
-    <div />
+  <header class="flex h-16 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 sm:px-6">
+    <!-- Hamburger (mobile only) -->
+    <button
+      class="flex h-10 w-10 items-center justify-center rounded-lg text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)] md:hidden"
+      @click="emit('toggle-sidebar')"
+    >
+      <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+      </svg>
+    </button>
+    <div class="hidden md:block" />
 
     <!-- User dropdown -->
     <div ref="dropdownRef" class="relative">
@@ -56,7 +69,7 @@ const initials = (email: string | undefined) => {
         >
           {{ initials(auth.user?.email) }}
         </div>
-        <span class="text-sm font-medium text-[var(--color-text-primary)]">{{ auth.user?.email }}</span>
+        <span class="hidden text-sm font-medium text-[var(--color-text-primary)] sm:inline">{{ auth.user?.email }}</span>
         <svg
           class="h-4 w-4 text-[var(--color-text-secondary)] transition-transform"
           :class="{ 'rotate-180': open }"
