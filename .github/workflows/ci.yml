@@ -1,3 +1,26 @@
+# ============================================================================
+# CI Pipeline — PR Outreach Intelligence
+# ============================================================================
+#
+# This pipeline runs on every push/PR to main or dev. It has 5 jobs:
+#
+#   1. build-shared      → Compiles shared-types (used by all other jobs)
+#   2. test-backend      → Backend unit + integration tests (with PostgreSQL)
+#   3. test-frontend     → Frontend unit + component tests
+#   4. build             → Compile check for both backend and frontend
+#   5. test-e2e          → Playwright E2E tests (main branch only)
+#
+# Jobs 2, 3, 4 run in parallel after job 1.
+# Job 5 runs after 2 and 3 pass, only on main.
+#
+# Key design decisions:
+#   - concurrency + cancel-in-progress: cancels stale runs on new pushes
+#   - --frozen-lockfile: guarantees reproducible dependency installs
+#   - Artifact passing: shared-types built once, downloaded by all jobs
+#   - Service containers: PostgreSQL with health checks for test reliability
+#   - E2E gated to main: avoids expensive Playwright runs on feature branches
+# ============================================================================
+
 name: CI
 
 on:
@@ -6,6 +29,7 @@ on:
   pull_request:
     branches: [main, dev]
 
+# If a new push arrives while CI is running, cancel the previous run
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
